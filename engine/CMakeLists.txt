@@ -14,23 +14,25 @@ add_library(engine
         descriptors/include/descriptor-set-layout.h
         descriptors/src/descriptor-sets.cpp
         descriptors/include/descriptor-sets.h
-        renderer/src/renderer.cpp
         renderer/include/renderer.h
         renderer/command-buffer/src/command-buffers.cpp
         renderer/command-buffer/include/command-buffers.h
         renderer/command-buffer/src/command-pool.cpp
         renderer/command-buffer/include/command-pool.h
-        renderer/src/synchronization.cpp
-        renderer/include/synchronization.h
         renderer/src/image-memory-barrier.cpp
         renderer/include/image-memory-barrier.h
         renderer/buffers/src/vertex-buffer.cpp
         renderer/buffers/include/vertex-buffer.h
         renderer/buffers/src/index-buffer.cpp
         renderer/buffers/include/index-buffer.h
-        renderer/src/square-drawer.cpp
-        renderer/include/square-drawer.h
         renderer/buffers/include/buffer.h
+        square-renderer/include/square-command-buffer-recorder-info.h
+        square-renderer/include/square-command-buffer-recorder.h
+        square-renderer/include/square-drawer.h
+        square-renderer/include/synchronization.h
+        square-renderer/src/square-command-buffer-recorder.cpp
+        square-renderer/src/square-drawer.cpp
+        square-renderer/src/synchronization.cpp
 )
 
 target_include_directories(engine PUBLIC include)

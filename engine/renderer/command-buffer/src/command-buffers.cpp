@@ -21,4 +21,3 @@ void CommandBuffers::CreateCommandBuffers(const VkCommandBufferLevel& level, uin
     if (vkAllocateCommandBuffers(_device->GetDevice(), &allocateInfo, _commandBuffers.data()) != VK_SUCCESS)
         throw std::runtime_error("failed to create command buffers");
 }
-

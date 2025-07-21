@@ -12,9 +12,9 @@
 #include "window.h"
 #include "engine/pipeline/include/graphics-pipeline.h"
 #include "engine/renderer/command-buffer/include/command-pool.h"
-#include "engine/renderer/include/renderer.h"
 #include "engine/swapchain/include/present-swapchain.h"
 #include "allocator.h"
+#include "engine/square-renderer/include/square-drawer.h"
 
 std::vector<const char*> GetRequiredExtensions()
 {
@@ -133,7 +133,7 @@ int main()
     std::unique_ptr<CommandBuffers> commandBuffers = std::make_unique<CommandBuffers>(2, VK_COMMAND_BUFFER_LEVEL_PRIMARY, pool.get()->GetCommandPool(), logicalDevice.get());
 
     std::unique_ptr<Allocator> allocator = std::make_unique<Allocator>(device.get(), logicalDevice.get(), instance.get());
-    std::unique_ptr<Renderer> renderer = std::make_unique<Renderer>(pool.get(), *commandBuffers.get(), pipeline.get(), swapchain.get(), logicalDevice.get(), allocator.get());
+    std::unique_ptr<SquareDrawer> renderer = std::make_unique<SquareDrawer>(allocator.get(), pool.get(), *commandBuffers.get(), pipeline.get(), swapchain.get(), logicalDevice.get());
 
     while (!glfwWindowShouldClose(window.WindowPointer()))
     {
