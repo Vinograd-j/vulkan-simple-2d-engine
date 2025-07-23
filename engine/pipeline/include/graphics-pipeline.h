@@ -21,6 +21,8 @@ public:
 
     VkPipeline GetPipeline() const override { return _pipeline; }
 
+    VkPipelineLayout GetPipelineLayout() const override { return  _pipelineLayout->GetPiplineLayout(); }
+
 private:
 
     void CreatePipeline() override;

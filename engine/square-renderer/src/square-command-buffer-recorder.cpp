@@ -74,6 +74,8 @@ void SquareCommandBufferRecorder::RecordCommandBuffer(uint32_t bufferIndex, VkIm
     vkCmdBindVertexBuffers(buffer, 0, 1, vertexBuffers, offsets);
     vkCmdBindIndexBuffer(buffer, _renderingObjects._indexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
+    vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderingObjects._pipeline->GetPipelineLayout(), 0, 1, &_renderingObjects._descriptorSets[bufferIndex], 0, nullptr);
+
     vkCmdDrawIndexed(buffer, _renderingObjects._indexBuffer->GetIndices().size(), 1, 0, 0, 0);
 
     vkCmdEndRendering(buffer);

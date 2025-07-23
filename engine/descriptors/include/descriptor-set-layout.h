@@ -1,6 +1,8 @@
 #pragma once
+
 #include <vector>
 
+#include "logical-device.h"
 #include "vulkan/vulkan.h"
 
 class DescriptorSetLayout
@@ -12,13 +14,11 @@ private:
 
     std::vector<VkDescriptorSetLayoutBinding> _bindings {};
 
-    const VkDevice* const _device;
+    const LogicalDevice* const _device;
 
 public:
 
-    explicit DescriptorSetLayout(const std::vector<VkDescriptorSetLayoutBinding>& bindings, const VkDevice* device);
-
-    void AddBinding(const VkDescriptorSetLayoutBinding& binding);
+    explicit DescriptorSetLayout(const std::vector<VkDescriptorSetLayoutBinding>& bindings, const LogicalDevice* device);
 
     VkDescriptorSetLayout GetDescriptorLayout() const { return _layout; }
 

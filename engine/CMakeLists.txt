@@ -12,8 +12,6 @@ add_library(engine
         struct/vertex.h
         descriptors/src/descriptor-set-layout.cpp
         descriptors/include/descriptor-set-layout.h
-        descriptors/src/descriptor-sets.cpp
-        descriptors/include/descriptor-sets.h
         renderer/include/renderer.h
         renderer/command-buffer/src/command-buffers.cpp
         renderer/command-buffer/include/command-buffers.h
@@ -33,7 +31,10 @@ add_library(engine
         square-renderer/src/square-command-buffer-recorder.cpp
         square-renderer/src/square-drawer.cpp
         square-renderer/src/synchronization.cpp
+        struct/uniform-object.h
+        renderer/buffers/src/uniform-buffer.cpp
+        renderer/buffers/include/uniform-buffer.h
 )
 
 target_include_directories(engine PUBLIC include)
-target_link_libraries(engine backend Vulkan::Vulkan file-manager)
+target_link_libraries(engine backend Vulkan::Vulkan file-manager glm::glm)

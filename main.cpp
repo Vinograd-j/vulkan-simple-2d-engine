@@ -14,6 +14,7 @@
 #include "engine/renderer/command-buffer/include/command-pool.h"
 #include "engine/swapchain/include/present-swapchain.h"
 #include "allocator.h"
+#include "engine/descriptors/include/descriptor-set-layout.h"
 #include "engine/square-renderer/include/square-drawer.h"
 
 std::vector<const char*> GetRequiredExtensions()
@@ -118,7 +119,23 @@ int main()
 
     std::unique_ptr<PresentSwapchain> swapchain = std::make_unique<PresentSwapchain>(device.get(), logicalDevice.get(), window.WindowPointer(), surface->GetSurface(), VK_NULL_HANDLE);
 
-    std::unique_ptr<PipelineLayout> layout = std::make_unique<PipelineLayout>(std::vector<VkDescriptorSetLayout>(), std::vector<VkPushConstantRange>(), logicalDevice.get());
+// START DESCRIPTORS
+
+
+    VkDescriptorSetLayoutBinding uboLayoutBinding{};
+    uboLayoutBinding.binding = 0;
+    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboLayoutBinding.descriptorCount = 1;
+    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    std::vector bindings { uboLayoutBinding };
+    std::unique_ptr<DescriptorSetLayout> descriptorSetLayout = std::make_unique<DescriptorSetLayout>(bindings, logicalDevice.get());
+    std::vector descriptorSetLayouts { descriptorSetLayout->GetDescriptorLayout() };
+
+    std::unique_ptr<PipelineLayout> layout = std::make_unique<PipelineLayout>(descriptorSetLayouts, std::vector<VkPushConstantRange>(), logicalDevice.get());
+
+
+// END DESCRIPTORS
 
     std::unique_ptr<ShaderModule> module1 = std::make_unique<ShaderModule>(logicalDevice.get(), VK_SHADER_STAGE_VERTEX_BIT, "vert");
     std::unique_ptr<ShaderModule> module2 = std::make_unique<ShaderModule>(logicalDevice.get(), VK_SHADER_STAGE_FRAGMENT_BIT, "frag");
@@ -133,7 +150,7 @@ int main()
     std::unique_ptr<CommandBuffers> commandBuffers = std::make_unique<CommandBuffers>(2, VK_COMMAND_BUFFER_LEVEL_PRIMARY, pool.get()->GetCommandPool(), logicalDevice.get());
 
     std::unique_ptr<Allocator> allocator = std::make_unique<Allocator>(device.get(), logicalDevice.get(), instance.get());
-    std::unique_ptr<SquareDrawer> renderer = std::make_unique<SquareDrawer>(allocator.get(), pool.get(), *commandBuffers.get(), pipeline.get(), swapchain.get(), logicalDevice.get());
+    std::unique_ptr<SquareDrawer> renderer = std::make_unique<SquareDrawer>(allocator.get(), pool.get(), *commandBuffers.get(), pipeline.get(), swapchain.get(), logicalDevice.get(), descriptorSetLayout->GetDescriptorLayout());
 
     while (!glfwWindowShouldClose(window.WindowPointer()))
     {
@@ -149,6 +166,7 @@ int main()
     allocator.reset();
     pipeline.reset();
     layout.reset();
+    descriptorSetLayout.reset();
     swapchain.reset();
     surface.reset();
     module1.reset();

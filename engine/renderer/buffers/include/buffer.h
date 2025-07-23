@@ -11,6 +11,8 @@ private:
 
     VkBuffer _buffer {};
     VmaAllocation _bufferMemory {};
+    VmaAllocationInfo _allocInfo {};
+    VkDeviceSize _bufferSize {};
 
     const Allocator* const _allocator;
 
@@ -25,10 +27,18 @@ public:
                                                                                                         _pool(pool),
                                                                                                         _device(device){}
 
-    void CreateBuffer(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, std::vector<T> data);
+    void CreateBuffer(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const std::vector<T>& data);
+    void CreateBuffer(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const T& data);
+
+    void CreateBufferMapped(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const std::vector<T>& data);
+    void CreateBufferMapped(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const T& data);
+
     void CreateBufferWithStaging(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, std::vector<T> data);
 
     VkBuffer GetBuffer() const { return _buffer; }
+
+    void UpdateData(const T* data, size_t count = 1);
+    void UpdateData(const std::vector<T>& data);
 
     ~Buffer();
 
@@ -36,27 +46,56 @@ private:
 
     void CopyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) const;
 
+    void CreateBuffer(const void* srcData, VkDeviceSize size, const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const VmaAllocationCreateFlags& flags);
+
 };
 
 template<typename T>
-void Buffer<T>::CreateBuffer(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, std::vector<T> data)
+void Buffer<T>::CreateBuffer(const void* srcData, VkDeviceSize size, const VkBufferUsageFlags& usage,
+    const VmaMemoryUsage& memoryUsage, const VmaAllocationCreateFlags& flags)
 {
-    VkDeviceSize bufferSize = sizeof(data[0]) * data.size();
-
-    VkBufferCreateInfo vertexBufferInfo{};
-    vertexBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    vertexBufferInfo.size = bufferSize;
-    vertexBufferInfo.usage = usage;
-    vertexBufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = size;
+    bufferInfo.usage = usage;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     VmaAllocationCreateInfo allocCreateInfo{};
     allocCreateInfo.usage = memoryUsage;
-    allocCreateInfo.flags = 0;
+    allocCreateInfo.flags = flags;
 
-    VmaAllocationInfo allocInfo;
-    _allocator->CreateBuffer(vertexBufferInfo, allocCreateInfo, &_buffer, &_bufferMemory, &allocInfo);
+    VmaAllocationInfo allocInfo{};
+    _allocator->CreateBuffer(bufferInfo, allocCreateInfo, &_buffer, &_bufferMemory, &allocInfo);
 
-    memcpy(allocInfo.pMappedData, data.data(), bufferSize);
+    _allocInfo = allocInfo;
+    _bufferSize = size;
+
+    if (srcData && allocInfo.pMappedData)
+        memcpy(allocInfo.pMappedData, srcData, size);
+}
+
+template<typename T>
+void Buffer<T>::CreateBuffer(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const std::vector<T>& data)
+{
+    CreateBuffer(data.data(), sizeof(T) * data.size(), usage, memoryUsage);
+}
+
+template<typename T>
+void Buffer<T>::CreateBuffer(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const T& data)
+{
+    CreateBuffer(data, sizeof(T), usage, memoryUsage);
+}
+
+template<typename T>
+void Buffer<T>::CreateBufferMapped(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const std::vector<T>& data)
+{
+    CreateBuffer(data.data(), sizeof(T) * data.size(), usage, memoryUsage, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+}
+
+template<typename T>
+void Buffer<T>::CreateBufferMapped(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const T& data)
+{
+    CreateBuffer(&data, sizeof(T), usage, memoryUsage, VMA_ALLOCATION_CREATE_MAPPED_BIT);
 }
 
 template<typename T>
@@ -133,6 +172,23 @@ void Buffer<T>::CopyBuffer(const VkBuffer src, const VkBuffer dst, VkDeviceSize 
     vkQueueWaitIdle(_device->GetQueues().at(GRAPHICS));
 
     vkFreeCommandBuffers(_device->GetDevice(), _pool->GetCommandPool(), 1, &commandBuffer);
+}
+
+template<typename T>
+void Buffer<T>::UpdateData(const std::vector<T>& data) {
+    UpdateData(data.data(), data.size());
+}
+
+template<typename T>
+void Buffer<T>::UpdateData(const T* data, size_t countOfElements) {
+    if (!_allocInfo.pMappedData)
+        throw std::runtime_error("Buffer not mapped");
+
+    VkDeviceSize size = sizeof(T) * countOfElements;
+    if (size > _bufferSize)
+        throw std::runtime_error("Data size exceeds buffer capacity");
+
+    memcpy(_allocInfo.pMappedData, data, size);
 }
 
 template<typename T>

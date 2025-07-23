@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-DescriptorSetLayout::DescriptorSetLayout(const std::vector<VkDescriptorSetLayoutBinding>& bindings, const VkDevice* device) : _bindings(bindings), _device(device)
+DescriptorSetLayout::DescriptorSetLayout(const std::vector<VkDescriptorSetLayoutBinding>& bindings, const LogicalDevice* device) : _bindings(bindings), _device(device)
 {
     CreateDescriptorLayout();
 }
@@ -14,21 +14,11 @@ void DescriptorSetLayout::CreateDescriptorLayout()
     createInfo.bindingCount = _bindings.size();
     createInfo.pBindings = _bindings.data();
 
-    if (vkCreateDescriptorSetLayout(*_device, &createInfo, nullptr, &_layout) != VK_SUCCESS)
+    if (vkCreateDescriptorSetLayout(_device->GetDevice(), &createInfo, nullptr, &_layout) != VK_SUCCESS)
         throw std::runtime_error("failed to create descriptor set layout");
-}
-
-void DescriptorSetLayout::AddBinding(const VkDescriptorSetLayoutBinding& binding)
-{
-
-    vkDestroyDescriptorSetLayout(*_device, _layout, nullptr);
-
-    _bindings.push_back(binding);
-
-    CreateDescriptorLayout();
 }
 
 DescriptorSetLayout::~DescriptorSetLayout()
 {
-    vkDestroyDescriptorSetLayout(*_device, _layout, nullptr);
+    vkDestroyDescriptorSetLayout(_device->GetDevice(), _layout, nullptr);
 }

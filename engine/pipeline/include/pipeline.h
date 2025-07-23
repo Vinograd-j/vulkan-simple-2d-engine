@@ -28,7 +28,7 @@ public:
 
     virtual VkPipeline GetPipeline() const = 0;
 
-    VkPipelineLayout GetPipelineLayout() const { return  _pipelineLayout->GetPiplineLayout(); }
+    virtual VkPipelineLayout GetPipelineLayout() const = 0;
 
 private:
 

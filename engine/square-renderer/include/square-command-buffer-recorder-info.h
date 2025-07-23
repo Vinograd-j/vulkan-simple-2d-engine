@@ -21,4 +21,6 @@ struct SquareCommandBufferRecorderInfo
     CommandBuffers* buffers;
 
     std::vector<VkImageLayout>* _swapchainImageLayouts;
+
+    std::vector<VkDescriptorSet> _descriptorSets;
 };
