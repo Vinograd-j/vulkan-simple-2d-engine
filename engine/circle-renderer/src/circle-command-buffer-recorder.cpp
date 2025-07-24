@@ -1,6 +1,6 @@
-#include "../include/square-command-buffer-recorder.h"
+#include "../include/circle-command-buffer-recorder.h"
 
-void SquareCommandBufferRecorder::RecordCommandBuffer(uint32_t bufferIndex, VkImageView imageView, uint32_t imageIndex)
+void CircleCommandBufferRecorder::RecordCommandBuffer(uint32_t bufferIndex, VkImageView imageView, uint32_t imageIndex)
 {
     auto& layouts = *_renderingObjects._swapchainImageLayouts;
 

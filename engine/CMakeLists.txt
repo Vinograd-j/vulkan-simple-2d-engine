@@ -24,13 +24,13 @@ add_library(engine
         renderer/buffers/src/index-buffer.cpp
         renderer/buffers/include/index-buffer.h
         renderer/buffers/include/buffer.h
-        square-renderer/include/square-command-buffer-recorder-info.h
-        square-renderer/include/square-command-buffer-recorder.h
-        square-renderer/include/square-drawer.h
-        square-renderer/include/synchronization.h
-        square-renderer/src/square-command-buffer-recorder.cpp
-        square-renderer/src/square-drawer.cpp
-        square-renderer/src/synchronization.cpp
+        circle-renderer/include/circle-command-buffer-recorder-info.h
+        circle-renderer/include/circle-command-buffer-recorder.h
+        circle-renderer/include/circle-drawer.h
+        circle-renderer/include/synchronization.h
+        circle-renderer/src/circle-command-buffer-recorder.cpp
+        circle-renderer/src/circle-drawer.cpp
+        circle-renderer/src/synchronization.cpp
         struct/uniform-object.h
         renderer/buffers/src/uniform-buffer.cpp
         renderer/buffers/include/uniform-buffer.h

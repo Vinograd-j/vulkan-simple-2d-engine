@@ -1,11 +1,11 @@
-#include "../include/square-drawer.h"
+#include "../include/circle-drawer.h"
 
 #include <chrono>
 #include <glm/ext/matrix_transform.hpp>
 
 #include "../../struct/uniform-object.h"
 
-SquareDrawer::SquareDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout) :
+CircleDrawer::CircleDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout) :
                                                                                                                             Renderer(pipeline, swapchain, device),
                                                                                                                             _allocator(allocator),
                                                                                                                             _commandPool(pool),
@@ -15,8 +15,8 @@ SquareDrawer::SquareDrawer(const Allocator* allocator, const CommandPool* pool, 
 {
     _swapchainImageLayouts.resize(_swapchain->GetSwapchainImages().size(), VK_IMAGE_LAYOUT_UNDEFINED);
 
-    CreateVertexBuffer();
-    CreateIndexBuffer();
+    CreateVertexBuffer(0.3f, 64);
+    CreateIndexBuffer(64);
     CreateUniformBuffers();
     CreateDescriptorPool();
     CreateDescriptorSets();
@@ -27,7 +27,7 @@ SquareDrawer::SquareDrawer(const Allocator* allocator, const CommandPool* pool, 
     _imageViews = _swapchain->GetImageViews(subresourceRange, mapping);
 }
 
-void SquareDrawer::DrawFrame()
+void CircleDrawer::DrawFrame()
 {
     const VkQueue graphicsQueue = _device->GetQueues().at(GRAPHICS);
     const VkQueue presentQueue = _device->GetQueues().at(PRESENT);
@@ -94,28 +94,39 @@ void SquareDrawer::DrawFrame()
     _currentFrame = (_currentFrame + 1) % FRAMES_IN_FLIGHT;
 }
 
-void SquareDrawer::CreateVertexBuffer()
+void CircleDrawer::CreateVertexBuffer(float radius, int segmentCount)
 {
-    const std::vector<Vertex> vertices = {
-        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
-    };
+    std::vector<Vertex> vertices;
+
+    vertices.push_back({ glm::vec2(0.0f, 0.0f), {1.0f, 0.0f, 0.0f} });
+
+    for (int i = 0; i <= segmentCount; ++i)
+    {
+        float angle = 2.0f * glm::pi<float>() * i / segmentCount;
+        float x = radius * cos(angle);
+        float y = radius * sin(angle);
+        vertices.push_back({ glm::vec2(x, y),  {0.0f, 1.0f, 0.0f} });
+    }
+
 
     _vertexBuffer = std::make_unique<VertexBuffer>(_allocator, vertices, _commandPool, _device);
 }
 
-void SquareDrawer::CreateIndexBuffer()
+void CircleDrawer::CreateIndexBuffer(int segmentCount)
 {
-    const std::vector<uint16_t> indices = {
-        0, 1, 2, 2, 3, 0
-    };
+    std::vector<uint16_t> indices;
+
+    for (int i = 1; i <= segmentCount; ++i)
+    {
+        indices.push_back(0);
+        indices.push_back(i);
+        indices.push_back(i + 1);
+    }
 
     _indexBuffer = std::make_unique<IndexBuffer>(_allocator, indices, _commandPool, _device);
 }
 
-VkImageSubresourceRange SquareDrawer::GetImageSubresourceRange() const
+VkImageSubresourceRange CircleDrawer::GetImageSubresourceRange() const
 {
     VkImageSubresourceRange subresourceRange {};
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -127,7 +138,7 @@ VkImageSubresourceRange SquareDrawer::GetImageSubresourceRange() const
     return subresourceRange;
 }
 
-VkComponentMapping SquareDrawer::GetComponentMapping() const
+VkComponentMapping CircleDrawer::GetComponentMapping() const
 {
     VkComponentMapping mapping {};
     mapping.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -138,7 +149,7 @@ VkComponentMapping SquareDrawer::GetComponentMapping() const
     return mapping;
 }
 
-void SquareDrawer::RecreateSwapchain()
+void CircleDrawer::RecreateSwapchain()
 {
     _swapchain->Recreate();
 
@@ -154,9 +165,9 @@ void SquareDrawer::RecreateSwapchain()
     _swapchainImageLayouts.resize(_imageViews.size(), VK_IMAGE_LAYOUT_UNDEFINED);
 }
 
-void SquareDrawer::CreateBufferRecorder()
+void CircleDrawer::CreateBufferRecorder()
 {
-    SquareCommandBufferRecorderInfo squareCommandBufferRecorderInfo;
+    CircleCommandBufferRecorderInfo squareCommandBufferRecorderInfo;
     squareCommandBufferRecorderInfo.pool = _commandPool;
     squareCommandBufferRecorderInfo.buffers = &_commandBuffers;
     squareCommandBufferRecorderInfo._pipeline = _pipeline;
@@ -166,10 +177,10 @@ void SquareDrawer::CreateBufferRecorder()
     squareCommandBufferRecorderInfo._swapchainImageLayouts = &_swapchainImageLayouts;
     squareCommandBufferRecorderInfo._descriptorSets = _descriptorSets;
 
-    _recorder = std::make_unique<SquareCommandBufferRecorder>(squareCommandBufferRecorderInfo);
+    _recorder = std::make_unique<CircleCommandBufferRecorder>(squareCommandBufferRecorderInfo);
 }
 
-void SquareDrawer::CreateUniformBuffers()
+void CircleDrawer::CreateUniformBuffers()
 {
     _uniformBuffers.resize(FRAMES_IN_FLIGHT);
 
@@ -178,7 +189,7 @@ void SquareDrawer::CreateUniformBuffers()
         _uniformBuffers[i] = std::make_unique<UniformBuffer>(_allocator, _commandPool, _device, ubo);
 }
 
-void SquareDrawer::CreateDescriptorPool()
+void CircleDrawer::CreateDescriptorPool()
 {
     VkDescriptorPoolSize poolSize {};
     poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -194,33 +205,38 @@ void SquareDrawer::CreateDescriptorPool()
         throw std::runtime_error("failed to create descriptor pool");
 }
 
-void SquareDrawer::UpdateUniformBuffer(uint32_t currentFrame)
+void CircleDrawer::UpdateUniformBuffer(uint32_t currentFrame) const
 {
     UniformObject ubo{};
 
     static auto startTime = std::chrono::high_resolution_clock::now();
 
     auto currentTime = std::chrono::high_resolution_clock::now();
+
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-    float amplitude = 1.0f;
-    float speed = 0.8f;
-    float yOffset = std::sin(time * speed) * amplitude;
+    float amplitude = 0.4f;
+    float speed = 0.9;
+    float xOffset = std::sin(time * speed) * amplitude;
 
-    float angle = cos(time * speed) * 3.14159 * 2;
+    float angle = cos(time * speed) * glm::pi<float>() / 12;
 
     glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::mat4 translation2 = glm::translate(glm::mat4(1.0f), glm::vec3(xOffset, 0.0f, 0.0f));
 
-    glm::mat4 translation = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, yOffset, 0.0f));
+    glm::mat4 model = rotation * translation2;
 
-    glm::mat4 model = translation * rotation;
+    float aspect = _swapchain->GetExtent().width / static_cast<float>(_swapchain->GetExtent().height);
+    glm::mat4 aspectFix = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / aspect, 1.0f, 1.0f));
+    model = aspectFix * rotation * translation2;
+    ubo._model = model;
 
     ubo._model = model;
 
     _uniformBuffers[currentFrame]->Update(ubo);
 }
 
-void SquareDrawer::CreateDescriptorSets()
+void CircleDrawer::CreateDescriptorSets()
 {
     std::vector<VkDescriptorSetLayout> layouts(FRAMES_IN_FLIGHT, _descriptorSetLayout);
 
@@ -256,7 +272,7 @@ void SquareDrawer::CreateDescriptorSets()
     }
 }
 
-SquareDrawer::~SquareDrawer()
+CircleDrawer::~CircleDrawer()
 {
     for (auto imageView : _imageViews)
         vkDestroyImageView(_device->GetDevice(), imageView, nullptr);

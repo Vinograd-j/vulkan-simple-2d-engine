@@ -1,3 +1,4 @@
+#include <chrono>
 #include <iostream>
 #include <vector>
 
@@ -15,7 +16,7 @@
 #include "engine/swapchain/include/present-swapchain.h"
 #include "allocator.h"
 #include "engine/descriptors/include/descriptor-set-layout.h"
-#include "engine/square-renderer/include/square-drawer.h"
+#include "engine/circle-renderer/include/circle-drawer.h"
 
 std::vector<const char*> GetRequiredExtensions()
 {
@@ -85,6 +86,22 @@ bool CheckValidationLayersSupport()
 
 bool debugMode = true;
 
+double lastTime = 0.0;
+int frameCount = 0;
+void updateFPS() {
+    double currentTime = std::chrono::duration<double>(
+        std::chrono::high_resolution_clock::now().time_since_epoch()
+    ).count();
+
+    frameCount++;
+
+    if (currentTime - lastTime >= 1.0) {
+        std::cout << "FPS: " << frameCount << std::endl;
+        frameCount = 0;
+        lastTime = currentTime;
+    }
+}
+
 int main()
 {
     glfwInit();
@@ -150,19 +167,22 @@ int main()
     std::unique_ptr<CommandBuffers> commandBuffers = std::make_unique<CommandBuffers>(2, VK_COMMAND_BUFFER_LEVEL_PRIMARY, pool.get()->GetCommandPool(), logicalDevice.get());
 
     std::unique_ptr<Allocator> allocator = std::make_unique<Allocator>(device.get(), logicalDevice.get(), instance.get());
-    std::unique_ptr<SquareDrawer> renderer = std::make_unique<SquareDrawer>(allocator.get(), pool.get(), *commandBuffers.get(), pipeline.get(), swapchain.get(), logicalDevice.get(), descriptorSetLayout->GetDescriptorLayout());
+    std::unique_ptr<CircleDrawer> circleDrawer = std::make_unique<CircleDrawer>(allocator.get(), pool.get(), *commandBuffers.get(), pipeline.get(), swapchain.get(), logicalDevice.get(), descriptorSetLayout->GetDescriptorLayout());
 
     while (!glfwWindowShouldClose(window.WindowPointer()))
     {
-        renderer.get()->DrawFrame();
+        circleDrawer.get()->DrawFrame();
         glfwPollEvents();
+
+        if (debugMode)
+            updateFPS();
     }
 
     vkDeviceWaitIdle(logicalDevice.get()->GetDevice());
 
     pool.reset();
     commandBuffers.reset();
-    renderer.reset();
+    circleDrawer.reset();
     allocator.reset();
     pipeline.reset();
     layout.reset();

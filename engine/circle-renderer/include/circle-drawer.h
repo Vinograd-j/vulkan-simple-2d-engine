@@ -1,7 +1,7 @@
 #pragma once
 
 #include "allocator.h"
-#include "square-command-buffer-recorder.h"
+#include "circle-command-buffer-recorder.h"
 #include "synchronization.h"
 #include "../../pipeline/include/graphics-pipeline.h"
 #include "../../swapchain/include/present-swapchain.h"
@@ -14,7 +14,7 @@
 
 constexpr int FRAMES_IN_FLIGHT = 2;
 
-class SquareDrawer : Renderer
+class CircleDrawer : Renderer
 {
 
 private:
@@ -37,7 +37,7 @@ private:
 
     std::vector<VkImageLayout> _swapchainImageLayouts;
 
-    std::unique_ptr<SquareCommandBufferRecorder> _recorder;
+    std::unique_ptr<CircleCommandBufferRecorder> _recorder;
 
     VkDescriptorSetLayout _descriptorSetLayout;
     VkDescriptorPool _descriptorPool;
@@ -49,16 +49,16 @@ private:
 
 public:
 
-    explicit SquareDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout);
+    explicit CircleDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout);
 
     void DrawFrame() override;
 
-    ~SquareDrawer() override;
+    ~CircleDrawer() override;
 
 private:
 
-    void CreateVertexBuffer();
-    void CreateIndexBuffer();
+    void CreateVertexBuffer(float radius, int segmentCount);
+    void CreateIndexBuffer(int segmentCount);
 
     VkImageSubresourceRange GetImageSubresourceRange() const;
 
@@ -72,5 +72,5 @@ private:
     void CreateDescriptorSets();
     void CreateDescriptorPool();
 
-    void UpdateUniformBuffer(uint32_t currentFrame);
+    void UpdateUniformBuffer(uint32_t currentFrame) const;
 };

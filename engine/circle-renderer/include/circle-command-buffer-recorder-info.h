@@ -6,7 +6,7 @@
 #include "../../renderer/command-buffer/include/command-buffers.h"
 #include "../../swapchain/include/present-swapchain.h"
 
-struct SquareCommandBufferRecorderInfo
+struct CircleCommandBufferRecorderInfo
 {
     const PresentSwapchain* _swapchain;
 
