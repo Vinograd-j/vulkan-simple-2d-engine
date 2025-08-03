@@ -1,6 +1,8 @@
 #include "../include/circle-drawer.h"
 
 #include <chrono>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
 #include <random>
 #include <glm/ext/matrix_transform.hpp>
 
@@ -11,13 +13,14 @@
 #include "../../struct/uniform-object.h"
 #include "../../struct/vertex.h"
 
-CircleDrawer::CircleDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout) :
+CircleDrawer::CircleDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, const ImGUI* gui) :
                                                                                                                             Renderer(pipeline, swapchain, device),
                                                                                                                             _allocator(allocator),
                                                                                                                             _commandPool(pool),
                                                                                                                             _commandBuffers(buffers),
                                                                                                                             _syncObjects(FRAMES_IN_FLIGHT, device),
-                                                                                                                            _descriptorSetLayout(layout)
+                                                                                                                            _descriptorSetLayout(layout),
+                                                                                                                            _gui(gui)
 {
     _swapchainImageLayouts.resize(_swapchain->GetSwapchainImages().size(), VK_IMAGE_LAYOUT_UNDEFINED);
 
@@ -56,18 +59,24 @@ void CircleDrawer::DrawFrame()
 
     _syncObjects.ResetFence(_currentFrame);
 
+    GuiFrame();
+
     _recorder->RecordCommandBuffer(_currentFrame, _imageViews[imageIndex], imageIndex);
+
+    VkCommandBuffer guiBuffer = _gui->PrepareCommandBuffer(imageIndex, _imageViews);
 
     VkSubmitInfo submitInfo {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    VkCommandBuffer submitBuffers[] = {_commandBuffers[_currentFrame], guiBuffer};
 
     VkSemaphore waitSemaphores[] = {_syncObjects.ImageAvailableSemaphores()[_currentFrame]};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &_commandBuffers[_currentFrame];
+    submitInfo.commandBufferCount = 2;
+    submitInfo.pCommandBuffers = submitBuffers;
 
     VkSemaphore signalSemaphores[] = {_syncObjects.RenderingFinishedSemaphores()[_currentFrame]};
     submitInfo.signalSemaphoreCount = 1;
@@ -98,6 +107,29 @@ void CircleDrawer::DrawFrame()
         throw std::runtime_error("failed to acquire swap chain image");
 
     _currentFrame = (_currentFrame + 1) % FRAMES_IN_FLIGHT;
+}
+
+void CircleDrawer::GuiFrame()
+{
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::Begin("Test Window");
+    ImGui::Text("Color changer");
+
+    if (ImGui::Button("Change color", {150, 30}))
+    {
+        std::random_device dev;
+        std::mt19937 rng(dev());
+        std::uniform_real_distribution<float> dist6(0.2f,1.0f);
+
+        _circleColor = glm::vec3(dist6(rng), dist6(rng), dist6(rng));
+    }
+
+    ImGui::End();
+
+    ImGui::Render();
 }
 
 void CircleDrawer::CreateVertexBuffer(float radius, int segmentCount)
@@ -210,8 +242,6 @@ void CircleDrawer::CreateDescriptorPool()
         throw std::runtime_error("failed to create descriptor pool");
 }
 
-glm::vec3 currentColor = {1.0, 0.0, 0.0};
-float lastColorChanged = 0;
 void CircleDrawer::UpdateUniformBuffer(uint32_t currentFrame) const
 {
     UniformObject ubo{};
@@ -221,8 +251,8 @@ void CircleDrawer::UpdateUniformBuffer(uint32_t currentFrame) const
 
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-    float speed = 5.0f;
-    float amplitude = 0.8f;
+    float speed = 2.0f;
+    float amplitude = 0.5f;
 
     float offsetY = std::sin(speed * time) * amplitude;
 
@@ -233,7 +263,7 @@ void CircleDrawer::UpdateUniformBuffer(uint32_t currentFrame) const
 
     ubo._model = translation;
 
-    ubo._color = currentColor;
+    ubo._color = _circleColor;
 
     _uniformBuffers[currentFrame]->Update(ubo);
 }

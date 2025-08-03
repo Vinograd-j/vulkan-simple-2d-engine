@@ -6,6 +6,7 @@
 #include "circle-command-buffer-recorder.h"
 #include "synchronization.h"
 #include "../../../backend/vulkan/buffers/include/uniform-buffer.h"
+#include "../../gui/include/im-gui.h"
 #include "../../pipeline/include/graphics-pipeline.h"
 #include "../../swapchain/include/present-swapchain.h"
 #include "../../renderer/include/renderer.h"
@@ -22,6 +23,8 @@ private:
     const CommandPool* const _commandPool;
 
     CommandBuffers _commandBuffers;
+
+    const ImGUI* const _gui;
 
 private:
 
@@ -41,17 +44,23 @@ private:
     VkDescriptorPool _descriptorPool;
     std::vector<VkDescriptorSet> _descriptorSets;
 
+    glm::vec3 _circleColor;
+
 private:
 
     uint32_t _currentFrame = 0;
 
 public:
 
-    explicit CircleDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout);
+    explicit CircleDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, const ImGUI* gui);
 
     void DrawFrame() override;
 
+    void GuiFrame();
+
     ~CircleDrawer() override;
+
+    std::vector<VkImageView> GetImageViews() const { return _imageViews; }
 
 private:
 

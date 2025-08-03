@@ -32,16 +32,14 @@ private:
 
     std::unique_ptr<ImGUICommandBufferRecorder> _recorder;
 
-    std::vector<VkImageView> _imageViews;
-
 public:
 
     explicit ImGUI(const PresentSwapchain* swapchain, const Window* window, const PhysicalDevice* physicalDevice, const LogicalDevice* logicalDevice,
-        const Instance* instance, const VkCommandPool& commandPool, const std::vector<VkImageView>& imageViews);
+        const Instance* instance, const VkCommandPool& commandPool);
 
     ~ImGUI();
 
-    void PrepareCommandBuffer(uint32_t bufferIndex) const;
+    VkCommandBuffer PrepareCommandBuffer(uint32_t imageIndex, const std::vector<VkImageView>& imageViews) const;
 
 private:
 

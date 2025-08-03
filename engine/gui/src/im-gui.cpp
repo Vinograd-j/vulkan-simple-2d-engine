@@ -1,17 +1,17 @@
 #include "../include/im-gui.h"
 
+#include "image-memory-barrier.h"
 #include "../../../cmake-build-debug/_deps/imgui-src/imgui.h"
 #include "../../../cmake-build-debug/_deps/imgui-src/backends/imgui_impl_glfw.h"
 #include "../../../cmake-build-debug/_deps/imgui-src/backends/imgui_impl_vulkan.h"
 
 ImGUI::ImGUI(const PresentSwapchain* swapchain, const Window* window, const PhysicalDevice* physicalDevice, const LogicalDevice* logicalDevice,
-    const Instance* instance, const VkCommandPool& commandPool, const std::vector<VkImageView>& imageViews) : _swapchain(swapchain),
-                                                                                                _window(window),
-                                                                                                _physicalDevice(physicalDevice),
-                                                                                                _device(logicalDevice),
-                                                                                                _instance(instance),
-                                                                                                _commandPool(commandPool),
-                                                                                                _imageViews(imageViews)
+    const Instance* instance, const VkCommandPool& commandPool) : _swapchain(swapchain),
+                                                                  _window(window),
+                                                                  _physicalDevice(physicalDevice),
+                                                                  _device(logicalDevice),
+                                                                  _instance(instance),
+                                                                  _commandPool(commandPool)
 {
     CreateDescriptorPool();
     InitImGUI();
@@ -25,8 +25,8 @@ void ImGUI::InitImGUI()
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableSetMousePos;
-    io.DisplaySize.x = _swapchain->GetExtent().height;
-    io.DisplaySize.y = _swapchain->GetExtent().width;
+    io.DisplaySize.x = _swapchain->GetExtent().width;
+    io.DisplaySize.y = _swapchain->GetExtent().height;
 
     ImGui::GetStyle().FontScaleMain = 1.5;
 
@@ -107,11 +107,11 @@ void ImGUI::Destroy()
 {
     _recorder.reset();
     _commandBuffers.reset();
-    vkDestroyDescriptorPool(_device->GetDevice(), _descriptorPool, nullptr);
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    vkDestroyDescriptorPool(_device->GetDevice(), _descriptorPool, nullptr);
 }
 
 ImGUI::~ImGUI()
@@ -119,7 +119,16 @@ ImGUI::~ImGUI()
     Destroy();
 }
 
-void ImGUI::PrepareCommandBuffer(uint32_t bufferIndex) const
+VkCommandBuffer ImGUI::PrepareCommandBuffer(uint32_t imageIndex, const std::vector<VkImageView>& imageViews) const
 {
-    _recorder->RecordCommandBuffer(bufferIndex, _imageViews[bufferIndex]);
+    _recorder->RecordCommandBuffer(imageIndex, imageViews[imageIndex]);
+
+    ImDrawData* drawData = ImGui::GetDrawData();
+    ImGui_ImplVulkan_RenderDrawData(drawData, _commandBuffers->GetCommandBuffers()[imageIndex]);
+
+    vkCmdEndRendering(_commandBuffers->GetCommandBuffers()[imageIndex]);
+
+    vkEndCommandBuffer(_commandBuffers->GetCommandBuffers()[imageIndex]);
+
+    return _commandBuffers->GetCommandBuffers()[imageIndex];
 }

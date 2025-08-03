@@ -25,7 +25,9 @@ void ImGUICommandBufferRecorder::RecordCommandBuffer(uint32_t bufferIndex, VkIma
     renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
     renderingInfo.renderArea.offset = {0, 0};
     renderingInfo.renderArea.extent = _extent;
+    renderingInfo.colorAttachmentCount = 1;
     renderingInfo.pColorAttachments = &colorAttachment;
+    renderingInfo.layerCount = 1;
 
     vkCmdBeginRendering(_commandBuffers->GetCommandBuffers()[bufferIndex], &renderingInfo);
 }
