@@ -1,9 +1,9 @@
 #include <chrono>
+#include <imgui.h>
 #include <iostream>
 #include <vector>
 
 #include "vulkan-application.h"
-#include "backend/include/instance.h"
 
 #include <GLFW/glfw3.h>
 
@@ -12,11 +12,10 @@
 #include "surface.h"
 #include "window.h"
 #include "engine/pipeline/include/graphics-pipeline.h"
-#include "engine/renderer/command-buffer/include/command-pool.h"
 #include "engine/swapchain/include/present-swapchain.h"
 #include "allocator.h"
 #include "engine/descriptors/include/descriptor-set-layout.h"
-#include "engine/circle-renderer/include/circle-drawer.h"
+#include "engine/scene/include/circle-drawer.h"
 
 std::vector<const char*> GetRequiredExtensions()
 {
@@ -171,6 +170,7 @@ int main()
 
     while (!glfwWindowShouldClose(window.WindowPointer()))
     {
+
         circleDrawer.get()->DrawFrame();
         glfwPollEvents();
 

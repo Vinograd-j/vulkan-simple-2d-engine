@@ -1,6 +1,8 @@
 #include "../include/shader-module.h"
 
-ShaderModule::ShaderModule(const LogicalDevice* device, const VkShaderStageFlagBits& shaderStage, const std::string& shaderName) : _device(device), _shaderName(shaderName), _stage(shaderStage)
+ShaderModule::ShaderModule(const LogicalDevice* device, const VkShaderStageFlagBits& shaderStage, const std::string& shaderName) : _device(device),
+                                                                                                                                  _stage(shaderStage),
+                                                                                                                                  _shaderName(shaderName)
 {
     CreateShaderModule();
     CreateShaderStage();

@@ -13,27 +13,29 @@ add_library(engine
         descriptors/src/descriptor-set-layout.cpp
         descriptors/include/descriptor-set-layout.h
         renderer/include/renderer.h
-        renderer/command-buffer/src/command-buffers.cpp
-        renderer/command-buffer/include/command-buffers.h
-        renderer/command-buffer/src/command-pool.cpp
-        renderer/command-buffer/include/command-pool.h
-        renderer/src/image-memory-barrier.cpp
-        renderer/include/image-memory-barrier.h
-        renderer/buffers/src/vertex-buffer.cpp
-        renderer/buffers/include/vertex-buffer.h
-        renderer/buffers/src/index-buffer.cpp
-        renderer/buffers/include/index-buffer.h
-        renderer/buffers/include/buffer.h
-        circle-renderer/include/circle-command-buffer-recorder-info.h
-        circle-renderer/include/circle-command-buffer-recorder.h
-        circle-renderer/include/circle-drawer.h
-        circle-renderer/include/synchronization.h
-        circle-renderer/src/circle-command-buffer-recorder.cpp
-        circle-renderer/src/circle-drawer.cpp
-        circle-renderer/src/synchronization.cpp
+        ../backend/vulkan/command-buffer/src/command-buffers.cpp
+        ../backend/vulkan/command-buffer/include/command-buffers.h
+        ../backend/vulkan/command-buffer/src/command-pool.cpp
+        ../backend/vulkan/command-buffer/include/command-pool.h
+        ../backend/vulkan/src/image-memory-barrier.cpp
+        ../backend/vulkan/include/image-memory-barrier.h
+        ../backend/vulkan/buffers/src/vertex-buffer.cpp
+        ../backend/vulkan/buffers/include/vertex-buffer.h
+        ../backend/vulkan/buffers/src/index-buffer.cpp
+        ../backend/vulkan/buffers/include/index-buffer.h
+        ../backend/vulkan/buffers/include/buffer.h
+        scene/include/circle-command-buffer-recorder-info.h
+        scene/include/circle-command-buffer-recorder.h
+        scene/include/circle-drawer.h
+        scene/include/synchronization.h
+        scene/src/circle-command-buffer-recorder.cpp
+        scene/src/circle-drawer.cpp
+        scene/src/synchronization.cpp
         struct/uniform-object.h
-        renderer/buffers/src/uniform-buffer.cpp
-        renderer/buffers/include/uniform-buffer.h
+        ../backend/vulkan/buffers/src/uniform-buffer.cpp
+        ../backend/vulkan/buffers/include/uniform-buffer.h
+        gui/src/im-gui.cpp
+        gui/include/im-gui.h
 )
 
 target_include_directories(engine PUBLIC include)
