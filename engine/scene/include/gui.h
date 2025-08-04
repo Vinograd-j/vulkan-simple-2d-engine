@@ -1,0 +1,21 @@
+#pragma once
+#include <functional>
+
+#include "../../gui/include/im-gui.h"
+
+class Gui
+{
+
+private:
+
+    const ImGUI* const _gui;
+
+public:
+
+    explicit Gui(const ImGUI* gui) : _gui(gui) {}
+
+    VkCommandBuffer PrepareCommandBuffer(uint32_t imageIndex, const VkImageView& imageView) const;
+
+    void DrawSceneGUI(const std::function<void()>& _onColorChangeButtonClicked) const;
+
+};

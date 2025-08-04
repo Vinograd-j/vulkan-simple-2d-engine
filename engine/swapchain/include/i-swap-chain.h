@@ -1,4 +1,5 @@
 #pragma once
+
 #include "logical-device.h"
 #include "swap-chain-support-details.h"
 #include "window.h"

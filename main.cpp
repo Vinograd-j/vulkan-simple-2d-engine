@@ -1,9 +1,9 @@
 #include <chrono>
+#include <imgui.h>
 #include <iostream>
 #include <vector>
 
 #include "vulkan-application.h"
-#include "backend/include/instance.h"
 
 #include <GLFW/glfw3.h>
 
@@ -12,11 +12,12 @@
 #include "surface.h"
 #include "window.h"
 #include "engine/pipeline/include/graphics-pipeline.h"
-#include "engine/renderer/command-buffer/include/command-pool.h"
 #include "engine/swapchain/include/present-swapchain.h"
 #include "allocator.h"
 #include "engine/descriptors/include/descriptor-set-layout.h"
-#include "engine/circle-renderer/include/circle-drawer.h"
+#include "engine/gui/include/im-gui.h"
+#include "engine/scene/include/gui.h"
+#include "engine/scene/include/scene-drawer.h"
 
 std::vector<const char*> GetRequiredExtensions()
 {
@@ -167,10 +168,16 @@ int main()
     std::unique_ptr<CommandBuffers> commandBuffers = std::make_unique<CommandBuffers>(2, VK_COMMAND_BUFFER_LEVEL_PRIMARY, pool.get()->GetCommandPool(), logicalDevice.get());
 
     std::unique_ptr<Allocator> allocator = std::make_unique<Allocator>(device.get(), logicalDevice.get(), instance.get());
-    std::unique_ptr<CircleDrawer> circleDrawer = std::make_unique<CircleDrawer>(allocator.get(), pool.get(), *commandBuffers.get(), pipeline.get(), swapchain.get(), logicalDevice.get(), descriptorSetLayout->GetDescriptorLayout());
+
+    std::unique_ptr<ImGUI> gui = std::make_unique<ImGUI>(swapchain.get(), &window, device.get(), logicalDevice.get(), instance.get(), pool.get()->GetCommandPool());
+    std::unique_ptr<Gui> sceneGui = std::make_unique<Gui>(gui.get());
+
+    std::unique_ptr<SceneDrawer> circleDrawer = std::make_unique<SceneDrawer>(allocator.get(), pool.get(), *commandBuffers.get(), pipeline.get(), swapchain.get(), logicalDevice.get(), descriptorSetLayout->GetDescriptorLayout(), sceneGui.get());
+
 
     while (!glfwWindowShouldClose(window.WindowPointer()))
     {
+
         circleDrawer.get()->DrawFrame();
         glfwPollEvents();
 
@@ -180,6 +187,8 @@ int main()
 
     vkDeviceWaitIdle(logicalDevice.get()->GetDevice());
 
+    sceneGui.reset();
+    gui.reset();
     pool.reset();
     commandBuffers.reset();
     circleDrawer.reset();
