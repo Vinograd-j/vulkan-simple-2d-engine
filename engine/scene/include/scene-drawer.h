@@ -3,7 +3,8 @@
 #include <memory>
 
 #include "allocator.h"
-#include "circle-command-buffer-recorder.h"
+#include "gui.h"
+#include "scene-command-buffer-recorder.h"
 #include "synchronization.h"
 #include "../../../backend/vulkan/buffers/include/uniform-buffer.h"
 #include "../../gui/include/im-gui.h"
@@ -13,7 +14,7 @@
 
 constexpr int FRAMES_IN_FLIGHT = 2;
 
-class CircleDrawer : Renderer
+class SceneDrawer : Renderer
 {
 
 private:
@@ -24,7 +25,7 @@ private:
 
     CommandBuffers _commandBuffers;
 
-    const ImGUI* const _gui;
+    const Gui* const _gui;
 
 private:
 
@@ -38,13 +39,13 @@ private:
 
     std::vector<VkImageLayout> _swapchainImageLayouts;
 
-    std::unique_ptr<CircleCommandBufferRecorder> _recorder;
+    std::unique_ptr<SceneCommandBufferRecorder> _recorder;
 
     VkDescriptorSetLayout _descriptorSetLayout;
     VkDescriptorPool _descriptorPool;
     std::vector<VkDescriptorSet> _descriptorSets;
 
-    glm::vec3 _circleColor;
+    glm::vec3 _circleColor {1, 1, 1};
 
 private:
 
@@ -52,13 +53,13 @@ private:
 
 public:
 
-    explicit CircleDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, const ImGUI* gui);
+    explicit SceneDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, const Gui* gui);
 
     void DrawFrame() override;
 
-    void GuiFrame();
+    void ChangeCircleColor();
 
-    ~CircleDrawer() override;
+    ~SceneDrawer() override;
 
     std::vector<VkImageView> GetImageViews() const { return _imageViews; }
 

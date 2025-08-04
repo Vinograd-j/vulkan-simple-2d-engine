@@ -1,7 +1,6 @@
-#include "../include/circle-drawer.h"
+#include "../include/scene-drawer.h"
 
 #include <chrono>
-#include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 #include <random>
 #include <glm/ext/matrix_transform.hpp>
@@ -13,14 +12,14 @@
 #include "../../struct/uniform-object.h"
 #include "../../struct/vertex.h"
 
-CircleDrawer::CircleDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, const ImGUI* gui) :
+SceneDrawer::SceneDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, const Gui* gui) :
                                                                                                                             Renderer(pipeline, swapchain, device),
                                                                                                                             _allocator(allocator),
                                                                                                                             _commandPool(pool),
                                                                                                                             _commandBuffers(buffers),
+                                                                                                                            _gui(gui),
                                                                                                                             _syncObjects(FRAMES_IN_FLIGHT, device),
-                                                                                                                            _descriptorSetLayout(layout),
-                                                                                                                            _gui(gui)
+                                                                                                                            _descriptorSetLayout(layout)
 {
     _swapchainImageLayouts.resize(_swapchain->GetSwapchainImages().size(), VK_IMAGE_LAYOUT_UNDEFINED);
 
@@ -36,7 +35,7 @@ CircleDrawer::CircleDrawer(const Allocator* allocator, const CommandPool* pool, 
     _imageViews = _swapchain->GetImageViews(subresourceRange, mapping);
 }
 
-void CircleDrawer::DrawFrame()
+void SceneDrawer::DrawFrame()
 {
     const VkQueue graphicsQueue = _device->GetQueues().at(GRAPHICS);
     const VkQueue presentQueue = _device->GetQueues().at(PRESENT);
@@ -59,11 +58,11 @@ void CircleDrawer::DrawFrame()
 
     _syncObjects.ResetFence(_currentFrame);
 
-    GuiFrame();
+    _gui->DrawSceneGUI(std::bind(SceneDrawer::ChangeCircleColor, this));
 
     _recorder->RecordCommandBuffer(_currentFrame, _imageViews[imageIndex], imageIndex);
 
-    VkCommandBuffer guiBuffer = _gui->PrepareCommandBuffer(imageIndex, _imageViews);
+    VkCommandBuffer guiBuffer = _gui->PrepareCommandBuffer(imageIndex, _imageViews[imageIndex]);
 
     VkSubmitInfo submitInfo {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -109,30 +108,16 @@ void CircleDrawer::DrawFrame()
     _currentFrame = (_currentFrame + 1) % FRAMES_IN_FLIGHT;
 }
 
-void CircleDrawer::GuiFrame()
+void SceneDrawer::ChangeCircleColor()
 {
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
+    std::random_device dev;
+    std::mt19937 rng(dev());
+    std::uniform_real_distribution<float> dist6(0.2f,1.0f);
 
-    ImGui::Begin("Test Window");
-    ImGui::Text("Color changer");
-
-    if (ImGui::Button("Change color", {150, 30}))
-    {
-        std::random_device dev;
-        std::mt19937 rng(dev());
-        std::uniform_real_distribution<float> dist6(0.2f,1.0f);
-
-        _circleColor = glm::vec3(dist6(rng), dist6(rng), dist6(rng));
-    }
-
-    ImGui::End();
-
-    ImGui::Render();
+    _circleColor = glm::vec3(dist6(rng), dist6(rng), dist6(rng));
 }
 
-void CircleDrawer::CreateVertexBuffer(float radius, int segmentCount)
+void SceneDrawer::CreateVertexBuffer(float radius, int segmentCount)
 {
     std::vector<Vertex> vertices;
 
@@ -150,7 +135,7 @@ void CircleDrawer::CreateVertexBuffer(float radius, int segmentCount)
     _vertexBuffer = std::make_unique<VertexBuffer>(_allocator, vertices, _commandPool, _device);
 }
 
-void CircleDrawer::CreateIndexBuffer(int segmentCount)
+void SceneDrawer::CreateIndexBuffer(int segmentCount)
 {
     std::vector<uint16_t> indices;
 
@@ -164,7 +149,16 @@ void CircleDrawer::CreateIndexBuffer(int segmentCount)
     _indexBuffer = std::make_unique<IndexBuffer>(_allocator, indices, _commandPool, _device);
 }
 
-VkImageSubresourceRange CircleDrawer::GetImageSubresourceRange() const
+void SceneDrawer::CreateUniformBuffers()
+{
+    _uniformBuffers.resize(FRAMES_IN_FLIGHT);
+
+    UniformObject ubo {};
+    for (int i = 0; i < _uniformBuffers.size(); ++i)
+        _uniformBuffers[i] = std::make_unique<UniformBuffer>(_allocator, _commandPool, _device, ubo);
+}
+
+VkImageSubresourceRange SceneDrawer::GetImageSubresourceRange() const
 {
     VkImageSubresourceRange subresourceRange {};
     subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -176,7 +170,7 @@ VkImageSubresourceRange CircleDrawer::GetImageSubresourceRange() const
     return subresourceRange;
 }
 
-VkComponentMapping CircleDrawer::GetComponentMapping() const
+VkComponentMapping SceneDrawer::GetComponentMapping() const
 {
     VkComponentMapping mapping {};
     mapping.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -187,7 +181,7 @@ VkComponentMapping CircleDrawer::GetComponentMapping() const
     return mapping;
 }
 
-void CircleDrawer::RecreateSwapchain()
+void SceneDrawer::RecreateSwapchain()
 {
     _swapchain->Recreate();
 
@@ -203,9 +197,9 @@ void CircleDrawer::RecreateSwapchain()
     _swapchainImageLayouts.resize(_imageViews.size(), VK_IMAGE_LAYOUT_UNDEFINED);
 }
 
-void CircleDrawer::CreateBufferRecorder()
+void SceneDrawer::CreateBufferRecorder()
 {
-    CircleCommandBufferRecorderInfo squareCommandBufferRecorderInfo;
+    SceneCommandBufferRecorderInfo squareCommandBufferRecorderInfo;
     squareCommandBufferRecorderInfo.buffers = &_commandBuffers;
     squareCommandBufferRecorderInfo._pipeline = _pipeline;
     squareCommandBufferRecorderInfo._swapchain = _swapchain;
@@ -214,19 +208,10 @@ void CircleDrawer::CreateBufferRecorder()
     squareCommandBufferRecorderInfo._swapchainImageLayouts = &_swapchainImageLayouts;
     squareCommandBufferRecorderInfo._descriptorSets = _descriptorSets;
 
-    _recorder = std::make_unique<CircleCommandBufferRecorder>(squareCommandBufferRecorderInfo);
+    _recorder = std::make_unique<SceneCommandBufferRecorder>(squareCommandBufferRecorderInfo);
 }
 
-void CircleDrawer::CreateUniformBuffers()
-{
-    _uniformBuffers.resize(FRAMES_IN_FLIGHT);
-
-    UniformObject ubo {};
-    for (int i = 0; i < _uniformBuffers.size(); ++i)
-        _uniformBuffers[i] = std::make_unique<UniformBuffer>(_allocator, _commandPool, _device, ubo);
-}
-
-void CircleDrawer::CreateDescriptorPool()
+void SceneDrawer::CreateDescriptorPool()
 {
     VkDescriptorPoolSize poolSize {};
     poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -242,7 +227,7 @@ void CircleDrawer::CreateDescriptorPool()
         throw std::runtime_error("failed to create descriptor pool");
 }
 
-void CircleDrawer::UpdateUniformBuffer(uint32_t currentFrame) const
+void SceneDrawer::UpdateUniformBuffer(uint32_t currentFrame) const
 {
     UniformObject ubo{};
 
@@ -268,7 +253,7 @@ void CircleDrawer::UpdateUniformBuffer(uint32_t currentFrame) const
     _uniformBuffers[currentFrame]->Update(ubo);
 }
 
-void CircleDrawer::CreateDescriptorSets()
+void SceneDrawer::CreateDescriptorSets()
 {
     std::vector<VkDescriptorSetLayout> layouts(FRAMES_IN_FLIGHT, _descriptorSetLayout);
 
@@ -304,7 +289,7 @@ void CircleDrawer::CreateDescriptorSets()
     }
 }
 
-CircleDrawer::~CircleDrawer()
+SceneDrawer::~SceneDrawer()
 {
     for (auto imageView : _imageViews)
         vkDestroyImageView(_device->GetDevice(), imageView, nullptr);

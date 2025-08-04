@@ -6,7 +6,7 @@
 #include "../../pipeline/include/graphics-pipeline.h"
 #include "../../swapchain/include/present-swapchain.h"
 
-struct CircleCommandBufferRecorderInfo
+struct SceneCommandBufferRecorderInfo
 {
     const PresentSwapchain* _swapchain;
 

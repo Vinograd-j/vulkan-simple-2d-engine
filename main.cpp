@@ -16,7 +16,8 @@
 #include "allocator.h"
 #include "engine/descriptors/include/descriptor-set-layout.h"
 #include "engine/gui/include/im-gui.h"
-#include "engine/scene/include/circle-drawer.h"
+#include "engine/scene/include/gui.h"
+#include "engine/scene/include/scene-drawer.h"
 
 std::vector<const char*> GetRequiredExtensions()
 {
@@ -169,8 +170,9 @@ int main()
     std::unique_ptr<Allocator> allocator = std::make_unique<Allocator>(device.get(), logicalDevice.get(), instance.get());
 
     std::unique_ptr<ImGUI> gui = std::make_unique<ImGUI>(swapchain.get(), &window, device.get(), logicalDevice.get(), instance.get(), pool.get()->GetCommandPool());
+    std::unique_ptr<Gui> sceneGui = std::make_unique<Gui>(gui.get());
 
-    std::unique_ptr<CircleDrawer> circleDrawer = std::make_unique<CircleDrawer>(allocator.get(), pool.get(), *commandBuffers.get(), pipeline.get(), swapchain.get(), logicalDevice.get(), descriptorSetLayout->GetDescriptorLayout(), gui.get());
+    std::unique_ptr<SceneDrawer> circleDrawer = std::make_unique<SceneDrawer>(allocator.get(), pool.get(), *commandBuffers.get(), pipeline.get(), swapchain.get(), logicalDevice.get(), descriptorSetLayout->GetDescriptorLayout(), sceneGui.get());
 
 
     while (!glfwWindowShouldClose(window.WindowPointer()))
@@ -185,6 +187,7 @@ int main()
 
     vkDeviceWaitIdle(logicalDevice.get()->GetDevice());
 
+    sceneGui.reset();
     gui.reset();
     pool.reset();
     commandBuffers.reset();

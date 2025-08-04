@@ -103,6 +103,20 @@ void ImGUI::CreateCommandBufferRecorder()
     _recorder = std::make_unique<ImGUICommandBufferRecorder>(_commandBuffers.get(), _swapchain->GetExtent());
 }
 
+VkCommandBuffer ImGUI::PrepareCommandBuffer(uint32_t imageIndex, const VkImageView& imageView) const
+{
+    _recorder->RecordCommandBuffer(imageIndex, imageView);
+
+    ImDrawData* drawData = ImGui::GetDrawData();
+    ImGui_ImplVulkan_RenderDrawData(drawData, _commandBuffers->GetCommandBuffers()[imageIndex]);
+
+    vkCmdEndRendering(_commandBuffers->GetCommandBuffers()[imageIndex]);
+
+    vkEndCommandBuffer(_commandBuffers->GetCommandBuffers()[imageIndex]);
+
+    return _commandBuffers->GetCommandBuffers()[imageIndex];
+}
+
 void ImGUI::Destroy()
 {
     _recorder.reset();
@@ -117,18 +131,4 @@ void ImGUI::Destroy()
 ImGUI::~ImGUI()
 {
     Destroy();
-}
-
-VkCommandBuffer ImGUI::PrepareCommandBuffer(uint32_t imageIndex, const std::vector<VkImageView>& imageViews) const
-{
-    _recorder->RecordCommandBuffer(imageIndex, imageViews[imageIndex]);
-
-    ImDrawData* drawData = ImGui::GetDrawData();
-    ImGui_ImplVulkan_RenderDrawData(drawData, _commandBuffers->GetCommandBuffers()[imageIndex]);
-
-    vkCmdEndRendering(_commandBuffers->GetCommandBuffers()[imageIndex]);
-
-    vkEndCommandBuffer(_commandBuffers->GetCommandBuffers()[imageIndex]);
-
-    return _commandBuffers->GetCommandBuffers()[imageIndex];
 }

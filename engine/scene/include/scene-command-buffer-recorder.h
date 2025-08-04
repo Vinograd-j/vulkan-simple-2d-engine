@@ -1,25 +1,25 @@
 #pragma once
-#include "circle-command-buffer-recorder-info.h"
+#include "scene-command-buffer-recorder-info.h"
 #include "../../../backend/vulkan/include/image-memory-barrier.h"
 #include "../../../backend/vulkan/command-buffer/include/command-buffer-recorder.h"
 #include "../../swapchain/include/present-swapchain.h"
 
-class CircleCommandBufferRecorder : CommandBufferRecorder
+class SceneCommandBufferRecorder : CommandBufferRecorder
 {
 
 private:
 
     ImageMemoryBarrier _barrier;
 
-    CircleCommandBufferRecorderInfo _renderingObjects;
+    SceneCommandBufferRecorderInfo _renderingObjects;
 
 public:
 
-    explicit CircleCommandBufferRecorder(const CircleCommandBufferRecorderInfo& info) :
+    explicit SceneCommandBufferRecorder(const SceneCommandBufferRecorderInfo& info) :
                                                                                         CommandBufferRecorder(info.buffers),
                                                                                         _renderingObjects(info) {}
 
-    ~CircleCommandBufferRecorder() override = default;
+    ~SceneCommandBufferRecorder() override = default;
 
     void RecordCommandBuffer(uint32_t bufferIndex, VkImageView imageView, uint32_t imageIndex) const;
 

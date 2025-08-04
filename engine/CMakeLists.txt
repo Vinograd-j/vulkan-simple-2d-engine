@@ -24,18 +24,20 @@ add_library(engine
         ../backend/vulkan/buffers/src/index-buffer.cpp
         ../backend/vulkan/buffers/include/index-buffer.h
         ../backend/vulkan/buffers/include/buffer.h
-        scene/include/circle-command-buffer-recorder-info.h
-        scene/include/circle-command-buffer-recorder.h
-        scene/include/circle-drawer.h
+        scene/include/scene-command-buffer-recorder-info.h
+        scene/include/scene-command-buffer-recorder.h
+        scene/include/scene-drawer.h
         scene/include/synchronization.h
-        scene/src/circle-command-buffer-recorder.cpp
-        scene/src/circle-drawer.cpp
+        scene/src/scene-command-buffer-recorder.cpp
+        scene/src/scene-drawer.cpp
         scene/src/synchronization.cpp
         struct/uniform-object.h
         ../backend/vulkan/buffers/src/uniform-buffer.cpp
         ../backend/vulkan/buffers/include/uniform-buffer.h
         gui/src/im-gui.cpp
         gui/include/im-gui.h
+        scene/src/gui.cpp
+        scene/include/gui.h
 )
 
 target_include_directories(engine PUBLIC include)

@@ -39,7 +39,7 @@ public:
 
     ~ImGUI();
 
-    VkCommandBuffer PrepareCommandBuffer(uint32_t imageIndex, const std::vector<VkImageView>& imageViews) const;
+    VkCommandBuffer PrepareCommandBuffer(uint32_t imageIndex, const VkImageView& imageView) const;
 
 private:
 
