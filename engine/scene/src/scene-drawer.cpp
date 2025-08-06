@@ -3,14 +3,11 @@
 #include <chrono>
 #include <imgui_impl_vulkan.h>
 #include <random>
-#include <glm/ext/matrix_transform.hpp>
-
-#include "../../../backend/vulkan/buffers/include/index-buffer.h"
+#include "../../../backend/vulkan/buffers/include/storage-buffer.h"
 #include "../../../backend/vulkan/buffers/include/uniform-buffer.h"
-#include "../../../backend/vulkan/buffers/include/vertex-buffer.h"
 #include "../../../backend/vulkan/include/allocator.h"
-#include "../../struct/uniform-object.h"
-#include "../../struct/vertex.h"
+#include "../../struct/object-data.h"
+#include "../objects/shapes/include/circle.h"
 
 SceneDrawer::SceneDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, const Gui* gui) :
                                                                                                                             Renderer(pipeline, swapchain, device),
@@ -23,9 +20,7 @@ SceneDrawer::SceneDrawer(const Allocator* allocator, const CommandPool* pool, co
 {
     _swapchainImageLayouts.resize(_swapchain->GetSwapchainImages().size(), VK_IMAGE_LAYOUT_UNDEFINED);
 
-    CreateVertexBuffer(0.3f, 64);
-    CreateIndexBuffer(64);
-    CreateUniformBuffers();
+    CreateSSBO();
     CreateDescriptorPool();
     CreateDescriptorSets();
     CreateBufferRecorder();
@@ -54,11 +49,11 @@ void SceneDrawer::DrawFrame()
     if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
         throw std::runtime_error("failed to acquire swap chain image");
 
-    UpdateUniformBuffer(_currentFrame);
+    //UpdateUniformBuffer(_currentFrame);
 
     _syncObjects.ResetFence(_currentFrame);
 
-    _gui->DrawSceneGUI(std::bind(SceneDrawer::ChangeCircleColor, this));
+    //_gui->DrawSceneGUI(std::bind(SceneDrawer::ChangeCircleColor, this));
 
     _recorder->RecordCommandBuffer(_currentFrame, _imageViews[imageIndex], imageIndex);
 
@@ -108,54 +103,13 @@ void SceneDrawer::DrawFrame()
     _currentFrame = (_currentFrame + 1) % FRAMES_IN_FLIGHT;
 }
 
-void SceneDrawer::ChangeCircleColor()
+void SceneDrawer::CreateSSBO()
 {
-    std::random_device dev;
-    std::mt19937 rng(dev());
-    std::uniform_real_distribution<float> dist6(0.2f,1.0f);
+    _ssbo.resize(FRAMES_IN_FLIGHT);
 
-    _circleColor = glm::vec3(dist6(rng), dist6(rng), dist6(rng));
-}
-
-void SceneDrawer::CreateVertexBuffer(float radius, int segmentCount)
-{
-    std::vector<Vertex> vertices;
-
-    vertices.push_back({ glm::vec2(0.0f, 0.0f), {1.0f, 0.0f, 0.0f} });
-
-    for (int i = 0; i <= segmentCount; ++i)
-    {
-        float angle = 2.0f * glm::pi<float>() * i / segmentCount;
-        float x = radius * cos(angle);
-        float y = radius * sin(angle);
-        vertices.push_back({ glm::vec2(x, y),  {0.0f, 1.0f, 0.0f} });
-    }
-
-
-    _vertexBuffer = std::make_unique<VertexBuffer>(_allocator, vertices, _commandPool, _device);
-}
-
-void SceneDrawer::CreateIndexBuffer(int segmentCount)
-{
-    std::vector<uint16_t> indices;
-
-    for (int i = 1; i <= segmentCount; ++i)
-    {
-        indices.push_back(0);
-        indices.push_back(i);
-        indices.push_back(i + 1);
-    }
-
-    _indexBuffer = std::make_unique<IndexBuffer>(_allocator, indices, _commandPool, _device);
-}
-
-void SceneDrawer::CreateUniformBuffers()
-{
-    _uniformBuffers.resize(FRAMES_IN_FLIGHT);
-
-    UniformObject ubo {};
-    for (int i = 0; i < _uniformBuffers.size(); ++i)
-        _uniformBuffers[i] = std::make_unique<UniformBuffer>(_allocator, _commandPool, _device, ubo);
+    ObjectData ubo {};
+    for (int i = 0; i < _ssbo.size(); ++i)
+        _ssbo[i] = std::make_unique<StorageBuffer>(_allocator, _commandPool, _device, _scene->GetObjectsSSBO());
 }
 
 VkImageSubresourceRange SceneDrawer::GetImageSubresourceRange() const
@@ -203,8 +157,7 @@ void SceneDrawer::CreateBufferRecorder()
     squareCommandBufferRecorderInfo.buffers = &_commandBuffers;
     squareCommandBufferRecorderInfo._pipeline = _pipeline;
     squareCommandBufferRecorderInfo._swapchain = _swapchain;
-    squareCommandBufferRecorderInfo._indexBuffer = _indexBuffer.get();
-    squareCommandBufferRecorderInfo._vertexBuffer = _vertexBuffer.get();
+    squareCommandBufferRecorderInfo._objects = _scene->GetObjectsSSBO();
     squareCommandBufferRecorderInfo._swapchainImageLayouts = &_swapchainImageLayouts;
     squareCommandBufferRecorderInfo._descriptorSets = _descriptorSets;
 
@@ -227,30 +180,12 @@ void SceneDrawer::CreateDescriptorPool()
         throw std::runtime_error("failed to create descriptor pool");
 }
 
-void SceneDrawer::UpdateUniformBuffer(uint32_t currentFrame) const
+void SceneDrawer::CreateScene()
 {
-    UniformObject ubo{};
+    std::vector<std::unique_ptr<Renderable>> objects;
+    objects.push_back(std::make_unique<Circle>(5, 36));
 
-    static auto startTime = std::chrono::high_resolution_clock::now();
-    auto currentTime = std::chrono::high_resolution_clock::now();
-
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-    float speed = 2.0f;
-    float amplitude = 0.5f;
-
-    float offsetY = std::sin(speed * time) * amplitude;
-
-    float aspectRatio = static_cast<float>(_swapchain->GetExtent().width) / static_cast<float>(_swapchain->GetExtent().height);
-    glm::mat4 aspectFix = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / aspectRatio, 1.0f, 1.0f));
-
-    glm::mat4 translation = glm::translate(aspectFix, glm::vec3(0.0f, offsetY, 0.0f));
-
-    ubo._model = translation;
-
-    ubo._color = _circleColor;
-
-    _uniformBuffers[currentFrame]->Update(ubo);
+    _scene = std::make_unique<Scene>(objects);
 }
 
 void SceneDrawer::CreateDescriptorSets()
@@ -270,16 +205,16 @@ void SceneDrawer::CreateDescriptorSets()
     for (int i = 0; i < FRAMES_IN_FLIGHT; ++i)
     {
         VkDescriptorBufferInfo bufferInfo {};
-        bufferInfo.buffer = _uniformBuffers[i].get()->GetBuffer();
+        bufferInfo.buffer = _ssbo[i].get()->GetBuffer();
         bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(UniformObject);
+        bufferInfo.range = sizeof(ObjectData) * _scene->GetObjectsSSBO().size();
 
         VkWriteDescriptorSet descriptorWrite {};
         descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrite.dstSet = _descriptorSets[i];
-        descriptorWrite.dstBinding = 0;
+        descriptorWrite.dstBinding = 1;
         descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         descriptorWrite.descriptorCount = 1;
         descriptorWrite.pBufferInfo = &bufferInfo;
         descriptorWrite.pImageInfo = nullptr;
@@ -294,11 +229,11 @@ SceneDrawer::~SceneDrawer()
     for (auto imageView : _imageViews)
         vkDestroyImageView(_device->GetDevice(), imageView, nullptr);
 
-    for (auto& buffer : _uniformBuffers)
+    for (auto& buffer : _ssbo)
         buffer.reset();
 
-    _vertexBuffer.reset();
-    _indexBuffer.reset();
+    _scene.reset();
+
     vkDestroyDescriptorPool(_device->GetDevice(), _descriptorPool, nullptr);
 
     _recorder.reset();

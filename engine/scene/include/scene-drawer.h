@@ -5,8 +5,9 @@
 #include "allocator.h"
 #include "gui.h"
 #include "scene-command-buffer-recorder.h"
+#include "scene.h"
 #include "synchronization.h"
-#include "../../../backend/vulkan/buffers/include/uniform-buffer.h"
+#include "../../../backend/vulkan/buffers/include/storage-buffer.h"
 #include "../../gui/include/im-gui.h"
 #include "../../pipeline/include/graphics-pipeline.h"
 #include "../../swapchain/include/present-swapchain.h"
@@ -27,15 +28,15 @@ private:
 
     const Gui* const _gui;
 
+    std::unique_ptr<Scene> _scene;
+
 private:
 
     Synchronization _syncObjects;
 
     std::vector<VkImageView> _imageViews;
 
-    std::unique_ptr<VertexBuffer> _vertexBuffer;
-    std::unique_ptr<IndexBuffer> _indexBuffer;
-    std::vector<std::unique_ptr<UniformBuffer>> _uniformBuffers;
+    std::vector<std::unique_ptr<StorageBuffer>> _ssbo;
 
     std::vector<VkImageLayout> _swapchainImageLayouts;
 
@@ -44,8 +45,6 @@ private:
     VkDescriptorSetLayout _descriptorSetLayout;
     VkDescriptorPool _descriptorPool;
     std::vector<VkDescriptorSet> _descriptorSets;
-
-    glm::vec3 _circleColor {1, 1, 1};
 
 private:
 
@@ -57,16 +56,11 @@ public:
 
     void DrawFrame() override;
 
-    void ChangeCircleColor();
-
     ~SceneDrawer() override;
 
     std::vector<VkImageView> GetImageViews() const { return _imageViews; }
 
 private:
-
-    void CreateVertexBuffer(float radius, int segmentCount);
-    void CreateIndexBuffer(int segmentCount);
 
     VkImageSubresourceRange GetImageSubresourceRange() const;
 
@@ -76,9 +70,10 @@ private:
 
     void CreateBufferRecorder();
 
-    void CreateUniformBuffers();
+    void CreateSSBO();
     void CreateDescriptorSets();
     void CreateDescriptorPool();
 
-    void UpdateUniformBuffer(uint32_t currentFrame) const;
+    void CreateScene();
+
 };

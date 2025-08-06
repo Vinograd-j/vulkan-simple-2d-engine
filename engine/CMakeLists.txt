@@ -31,13 +31,21 @@ add_library(engine
         scene/src/scene-command-buffer-recorder.cpp
         scene/src/scene-drawer.cpp
         scene/src/synchronization.cpp
-        struct/uniform-object.h
+        struct/object-data.h
         ../backend/vulkan/buffers/src/uniform-buffer.cpp
         ../backend/vulkan/buffers/include/uniform-buffer.h
         gui/src/im-gui.cpp
         gui/include/im-gui.h
         scene/src/gui.cpp
         scene/include/gui.h
+        scene/objects/src/Renderable.cpp
+        scene/objects/include/renderable.h
+        scene/objects/include/shape-type.h
+        scene/objects/shapes/src/circle.cpp
+        scene/objects/shapes/include/circle.h
+        scene/src/scene.cpp
+        scene/include/scene.h
+        struct/UniformBuffer.h
 )
 
 target_include_directories(engine PUBLIC include)

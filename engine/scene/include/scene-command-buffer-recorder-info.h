@@ -4,6 +4,7 @@
 #include "../../../backend/vulkan/buffers/include/vertex-buffer.h"
 #include "../../../backend/vulkan/command-buffer/include/command-buffers.h"
 #include "../../pipeline/include/graphics-pipeline.h"
+#include "../../struct/object-data.h"
 #include "../../swapchain/include/present-swapchain.h"
 
 struct SceneCommandBufferRecorderInfo
@@ -12,9 +13,7 @@ struct SceneCommandBufferRecorderInfo
 
     const GraphicsPipeline* _pipeline;
 
-    const VertexBuffer* _vertexBuffer;
-
-    const IndexBuffer* _indexBuffer;
+    std::vector<ObjectData> _objects;
 
     CommandBuffers* buffers;
 

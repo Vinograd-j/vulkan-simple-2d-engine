@@ -1,0 +1,38 @@
+#pragma once
+
+#include "../../include/renderable.h"
+
+class Circle : public Renderable
+{
+
+private:
+
+    float _radius;
+
+    int _segmentCount;
+
+public:
+
+    explicit Circle(float radius, int segmentCount);
+
+    ~Circle() override = default;
+
+private:
+
+    void GenerateCircle();
+
+public:
+
+    const std::vector<Vertex> GetVertices() const override { return _vertices; }
+
+    const std::vector<uint32_t> GetIndices() const override { return _indices; }
+
+    ShapeType GetShapeType() const override { return ShapeType::Circle; }
+
+protected:
+
+    void CreateVertices() override;
+
+    void CreateIndices() override;
+
+};

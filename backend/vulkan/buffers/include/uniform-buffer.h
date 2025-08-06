@@ -1,7 +1,9 @@
 #pragma once
 
 #include "buffer.h"
-#include "../../../../engine/struct/uniform-object.h"
+#include "../../../../engine/struct/object-data.h"
+
+#include "../../../../engine/struct/UniformBuffer.h"
 
 class UniformBuffer
 {
@@ -12,7 +14,7 @@ private:
 
 public:
 
-    explicit UniformBuffer(const Allocator* allocator, const CommandPool* pool, const LogicalDevice* device, const UniformObject& initial);
+    explicit UniformBuffer(const Allocator* allocator, const CommandPool* pool, const LogicalDevice* device, const ObjectData& initial);
 
     VkBuffer GetBuffer() const { return _buffer.GetBuffer(); }
 
