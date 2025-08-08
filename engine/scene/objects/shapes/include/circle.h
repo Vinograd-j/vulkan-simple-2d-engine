@@ -25,7 +25,7 @@ public:
 
     const std::vector<Vertex> GetVertices() const override { return _vertices; }
 
-    const std::vector<uint32_t> GetIndices() const override { return _indices; }
+    const std::vector<uint16_t> GetIndices() const override { return _indices; }
 
     ShapeType GetShapeType() const override { return ShapeType::Circle; }
 

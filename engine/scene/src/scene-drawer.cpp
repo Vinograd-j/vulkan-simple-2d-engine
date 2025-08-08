@@ -105,11 +105,11 @@ void SceneDrawer::DrawFrame()
 
 void SceneDrawer::CreateSSBO()
 {
-    _ssbo.resize(FRAMES_IN_FLIGHT);
+    _storageBuffer.resize(FRAMES_IN_FLIGHT);
 
     ObjectData ubo {};
-    for (int i = 0; i < _ssbo.size(); ++i)
-        _ssbo[i] = std::make_unique<StorageBuffer>(_allocator, _commandPool, _device, _scene->GetObjectsSSBO());
+    for (int i = 0; i < _storageBuffer.size(); ++i)
+        _storageBuffer[i] = std::make_unique<StorageBuffer>(_allocator, _commandPool, _device, _scene->GetObjectsSSBO());
 }
 
 VkImageSubresourceRange SceneDrawer::GetImageSubresourceRange() const
@@ -154,10 +154,12 @@ void SceneDrawer::RecreateSwapchain()
 void SceneDrawer::CreateBufferRecorder()
 {
     SceneCommandBufferRecorderInfo squareCommandBufferRecorderInfo;
-    squareCommandBufferRecorderInfo.buffers = &_commandBuffers;
+    squareCommandBufferRecorderInfo._buffers = &_commandBuffers;
     squareCommandBufferRecorderInfo._pipeline = _pipeline;
     squareCommandBufferRecorderInfo._swapchain = _swapchain;
     squareCommandBufferRecorderInfo._objects = _scene->GetObjectsSSBO();
+    squareCommandBufferRecorderInfo._vertexBuffer = _scene->GetObjectsSSBO();
+    squareCommandBufferRecorderInfo._indexBuffer = _scene->GetObjectsSSBO();
     squareCommandBufferRecorderInfo._swapchainImageLayouts = &_swapchainImageLayouts;
     squareCommandBufferRecorderInfo._descriptorSets = _descriptorSets;
 
@@ -188,6 +190,16 @@ void SceneDrawer::CreateScene()
     _scene = std::make_unique<Scene>(objects);
 }
 
+void SceneDrawer::CreateVertexBuffer()
+{
+    _vertexBuffer = std::make_unique<VertexBuffer>(_allocator, _scene->GetAllVertices(), _commandPool, _device);
+}
+
+void SceneDrawer::CreateIndexBuffer()
+{
+    _indexBuffer = std::make_unique<IndexBuffer>(_allocator, _scene->GetAllIndices(), _commandPool, _device);
+}
+
 void SceneDrawer::CreateDescriptorSets()
 {
     std::vector<VkDescriptorSetLayout> layouts(FRAMES_IN_FLIGHT, _descriptorSetLayout);
@@ -205,7 +217,7 @@ void SceneDrawer::CreateDescriptorSets()
     for (int i = 0; i < FRAMES_IN_FLIGHT; ++i)
     {
         VkDescriptorBufferInfo bufferInfo {};
-        bufferInfo.buffer = _ssbo[i].get()->GetBuffer();
+        bufferInfo.buffer = _storageBuffer[i].get()->GetBuffer();
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(ObjectData) * _scene->GetObjectsSSBO().size();
 
@@ -229,7 +241,7 @@ SceneDrawer::~SceneDrawer()
     for (auto imageView : _imageViews)
         vkDestroyImageView(_device->GetDevice(), imageView, nullptr);
 
-    for (auto& buffer : _ssbo)
+    for (auto& buffer : _storageBuffer)
         buffer.reset();
 
     _scene.reset();

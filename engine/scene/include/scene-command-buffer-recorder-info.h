@@ -1,5 +1,6 @@
 #pragma once
 
+#include "scene.h"
 #include "../../../backend/vulkan/buffers/include/index-buffer.h"
 #include "../../../backend/vulkan/buffers/include/vertex-buffer.h"
 #include "../../../backend/vulkan/command-buffer/include/command-buffers.h"
@@ -15,7 +16,10 @@ struct SceneCommandBufferRecorderInfo
 
     std::vector<ObjectData> _objects;
 
-    CommandBuffers* buffers;
+    VkBuffer _vertexBuffer;
+    VkBuffer _indexBuffer;
+
+    CommandBuffers* _buffers;
 
     std::vector<VkImageLayout>* _swapchainImageLayouts;
 

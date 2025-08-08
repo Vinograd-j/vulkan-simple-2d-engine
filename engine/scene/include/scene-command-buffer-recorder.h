@@ -16,7 +16,7 @@ private:
 public:
 
     explicit SceneCommandBufferRecorder(const SceneCommandBufferRecorderInfo& info) :
-                                                                                        CommandBufferRecorder(info.buffers),
+                                                                                        CommandBufferRecorder(info._buffers),
                                                                                         _renderingObjects(info) {}
 
     ~SceneCommandBufferRecorder() override = default;

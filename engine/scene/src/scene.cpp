@@ -10,7 +10,7 @@ Scene::Scene(const std::vector<std::unique_ptr<Renderable>> &objects) : _objects
 void Scene::PrepareScene()
 {
     std::vector<Vertex> allVertices;
-    std::vector<uint32_t> allIndices;
+    std::vector<uint16_t> allIndices;
 
     uint32_t vertexOffset = 0;
     uint32_t indexOffset = 0;

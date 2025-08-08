@@ -36,8 +36,6 @@ private:
 
     std::vector<VkImageView> _imageViews;
 
-    std::vector<std::unique_ptr<StorageBuffer>> _ssbo;
-
     std::vector<VkImageLayout> _swapchainImageLayouts;
 
     std::unique_ptr<SceneCommandBufferRecorder> _recorder;
@@ -45,6 +43,10 @@ private:
     VkDescriptorSetLayout _descriptorSetLayout;
     VkDescriptorPool _descriptorPool;
     std::vector<VkDescriptorSet> _descriptorSets;
+
+    std::unique_ptr<IndexBuffer> _indexBuffer;
+    std::unique_ptr<VertexBuffer> _vertexBuffer;
+    std::vector<std::unique_ptr<StorageBuffer>> _storageBuffer;
 
 private:
 
@@ -76,4 +78,6 @@ private:
 
     void CreateScene();
 
+    void CreateVertexBuffer();
+    void CreateIndexBuffer();
 };

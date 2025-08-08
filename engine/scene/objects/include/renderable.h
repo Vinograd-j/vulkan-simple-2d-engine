@@ -15,13 +15,13 @@ protected:
     glm::vec4 _color {};
 
     std::vector<Vertex> _vertices;
-    std::vector<uint32_t> _indices;
+    std::vector<uint16_t> _indices;
 
 public:
 
     virtual const std::vector<Vertex> GetVertices() const = 0;
 
-    virtual const std::vector<uint32_t> GetIndices() const = 0;
+    virtual const std::vector<uint16_t> GetIndices() const = 0;
 
     virtual ShapeType GetShapeType() const = 0;
 

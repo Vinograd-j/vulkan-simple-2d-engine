@@ -32,7 +32,7 @@ void Circle::CreateVertices()
 
 void Circle::CreateIndices()
 {
-    std::vector<uint32_t> indices;
+    std::vector<uint16_t> indices;
 
     for (int i = 1; i <= _segmentCount; ++i)
     {

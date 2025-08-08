@@ -15,7 +15,7 @@ private:
     std::vector<ObjectData> _objectSSBO;
 
     std::vector<Vertex> _allVertices;
-    std::vector<uint32_t> _allIndices;
+    std::vector<uint16_t> _allIndices;
 
 public:
 
@@ -23,9 +23,9 @@ public:
 
     std::vector<ObjectData> GetObjectsSSBO() const { return _objectSSBO; }
 
-    std::vector<Vertex> all_vertices() const { return _allVertices; }
+    std::vector<Vertex> GetAllVertices() const { return _allVertices; }
 
-    std::vector<uint32_t> all_indices() const { return _allIndices; }
+    std::vector<uint16_t> GetAllIndices() const { return _allIndices; }
 
     ~Scene();
 

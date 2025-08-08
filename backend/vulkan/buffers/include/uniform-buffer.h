@@ -3,7 +3,7 @@
 #include "buffer.h"
 #include "../../../../engine/struct/object-data.h"
 
-#include "../../../../engine/struct/UniformBuffer.h"
+#include "../../../../engine/struct/uniform-buffer.h"
 
 class UniformBuffer
 {
