@@ -17,6 +17,8 @@ add_library(backend STATIC
         vulkan/include/swap-chain-support-details.h
         ../engine/gui/src/im-gui-command-buffer-recorder.cpp
         ../engine/gui/include/im-gui-command-buffer-recorder.h
+        vulkan/buffers/src/storage-buffer.cpp
+        vulkan/buffers/include/storage-buffer.h
 )
 
 target_include_directories(backend PUBLIC vulkan/include)

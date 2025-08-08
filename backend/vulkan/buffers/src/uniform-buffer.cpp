@@ -1,6 +1,6 @@
 #include "../include/uniform-buffer.h"
 
-#include "../../../../engine/struct/uniform-object.h"
+#include "../../../../engine/struct/object-data.h"
 
 UniformBuffer::UniformBuffer(const Allocator* allocator, const CommandPool* pool, const LogicalDevice* device, const UniformObject& initial) :
                                                                                                                                 _buffer(allocator, pool, device)

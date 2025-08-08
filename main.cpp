@@ -109,7 +109,7 @@ int main()
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     //glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    VulkanApplication application("Vulkan", VK_MAKE_VERSION(1, 0, 0),"No engine", VK_MAKE_VERSION(1, 0, 0), VK_API_VERSION_1_3, nullptr);
+    VulkanApplication application("Vulkan", VK_MAKE_VERSION(1, 0, 0),"No engine", VK_MAKE_VERSION(1, 0, 0), VK_API_VERSION_1_1, nullptr);
 
     std::unique_ptr<Instance> instance;
     if (CheckValidationLayersSupport() && debugMode)
@@ -125,13 +125,28 @@ int main()
 
     instance->CreateInstance();
 
+    // uint32_t count = 0;
+    // vkEnumeratePhysicalDevices(instance->GetInstance(), &count, nullptr);
+    // std::vector<VkPhysicalDevice> devices(count);
+    // vkEnumeratePhysicalDevices(instance->GetInstance(), &count, devices.data());
+    //
+    // for (auto vk_physical_device : devices) {
+    //     VkPhysicalDeviceProperties properties;
+    //     vkGetPhysicalDeviceProperties(vk_physical_device, &properties);
+    //
+    //     std::cout << "name: " << properties.deviceName << std::endl;
+    //     std::cout << "vendor: " << properties.vendorID << std::endl;
+    //     std::cout << "id: " << properties.deviceID << std::endl;
+    //     std::cout << "id: " << properties.limits.maxPushConstantsSize << std::endl;
+    // }
+
     Window window(600, 800, "Vulkan");
     window.CreateWindow();
 
     std::unique_ptr<Surface> surface = std::make_unique<Surface>(instance->GetInstance(), window.WindowPointer());
 
     std::unique_ptr<PhysicalDevice> device = std::make_unique<PhysicalDevice>(instance->GetInstance(), surface->GetSurface(), deviceExtensions);
-    device->ChoosePhysicalDevice(7942, 4318);
+    device->ChoosePhysicalDevice(7443, 4318);
 
     std::unique_ptr<LogicalDevice> logicalDevice = std::make_unique<LogicalDevice>(*device);
 
