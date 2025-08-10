@@ -12,7 +12,7 @@ protected:
 
     glm::mat4 _model {};
 
-    glm::vec4 _color {};
+    glm::vec3 _color {};
 
     std::vector<Vertex> _vertices;
     std::vector<uint16_t> _indices;
@@ -26,7 +26,9 @@ public:
     virtual ShapeType GetShapeType() const = 0;
 
     glm::mat4 GetModelMatrix() const { return _model; }
-    glm::vec4 GetColor() const { return _color; }
+    void UpdateModel(const glm::mat4& model) { _model = model; }
+
+    glm::vec3 GetColor() const { return _color; }
 
     virtual ~Renderable() = default;
 

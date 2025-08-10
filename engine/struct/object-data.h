@@ -8,7 +8,6 @@ struct alignas(16) ObjectData
     glm::vec3 _color;
 
     int _type;
-    int _vertexOffset;
     int _indexOffset;
     int _indexCount;
 };

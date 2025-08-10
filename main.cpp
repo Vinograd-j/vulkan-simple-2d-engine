@@ -109,7 +109,7 @@ int main()
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     //glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    VulkanApplication application("Vulkan", VK_MAKE_VERSION(1, 0, 0),"No engine", VK_MAKE_VERSION(1, 0, 0), VK_API_VERSION_1_1, nullptr);
+    VulkanApplication application("Vulkan", VK_MAKE_VERSION(1, 0, 0),"No engine", VK_MAKE_VERSION(1, 0, 0), VK_API_VERSION_1_3, nullptr);
 
     std::unique_ptr<Instance> instance;
     if (CheckValidationLayersSupport() && debugMode)
@@ -146,8 +146,8 @@ int main()
     std::unique_ptr<Surface> surface = std::make_unique<Surface>(instance->GetInstance(), window.WindowPointer());
 
     std::unique_ptr<PhysicalDevice> device = std::make_unique<PhysicalDevice>(instance->GetInstance(), surface->GetSurface(), deviceExtensions);
-    device->ChoosePhysicalDevice(7443, 4318);
-
+    // device->ChoosePhysicalDevice(7443, 4318); LAPTOP
+    device->ChoosePhysicalDevice(7942, 4318);
     std::unique_ptr<LogicalDevice> logicalDevice = std::make_unique<LogicalDevice>(*device);
 
     std::unique_ptr<PresentSwapchain> swapchain = std::make_unique<PresentSwapchain>(device.get(), logicalDevice.get(), window.WindowPointer(), surface->GetSurface(), VK_NULL_HANDLE);
@@ -156,8 +156,8 @@ int main()
 
 
     VkDescriptorSetLayoutBinding uboLayoutBinding{};
-    uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboLayoutBinding.binding = 1;
+    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     uboLayoutBinding.descriptorCount = 1;
     uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
@@ -165,7 +165,13 @@ int main()
     std::unique_ptr<DescriptorSetLayout> descriptorSetLayout = std::make_unique<DescriptorSetLayout>(bindings, logicalDevice.get());
     std::vector descriptorSetLayouts { descriptorSetLayout->GetDescriptorLayout() };
 
-    std::unique_ptr<PipelineLayout> layout = std::make_unique<PipelineLayout>(descriptorSetLayouts, std::vector<VkPushConstantRange>(), logicalDevice.get());
+    VkPushConstantRange range {};
+    range.offset = 0;
+    range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    range.size = sizeof(uint32_t);
+
+    std::vector ranges {range};
+    std::unique_ptr<PipelineLayout> layout = std::make_unique<PipelineLayout>(descriptorSetLayouts, ranges, logicalDevice.get());
 
 
 // END DESCRIPTORS

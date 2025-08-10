@@ -3,6 +3,8 @@
 #include <chrono>
 #include <imgui_impl_vulkan.h>
 #include <random>
+#include <glm/ext/matrix_transform.hpp>
+
 #include "../../../backend/vulkan/buffers/include/storage-buffer.h"
 #include "../../../backend/vulkan/buffers/include/uniform-buffer.h"
 #include "../../../backend/vulkan/include/allocator.h"
@@ -20,6 +22,9 @@ SceneDrawer::SceneDrawer(const Allocator* allocator, const CommandPool* pool, co
 {
     _swapchainImageLayouts.resize(_swapchain->GetSwapchainImages().size(), VK_IMAGE_LAYOUT_UNDEFINED);
 
+    CreateScene();
+    CreateVertexBuffer();
+    CreateIndexBuffer();
     CreateSSBO();
     CreateDescriptorPool();
     CreateDescriptorSets();
@@ -57,19 +62,19 @@ void SceneDrawer::DrawFrame()
 
     _recorder->RecordCommandBuffer(_currentFrame, _imageViews[imageIndex], imageIndex);
 
-    VkCommandBuffer guiBuffer = _gui->PrepareCommandBuffer(imageIndex, _imageViews[imageIndex]);
+    //VkCommandBuffer guiBuffer = _gui->PrepareCommandBuffer(imageIndex, _imageViews[imageIndex]);
 
     VkSubmitInfo submitInfo {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkCommandBuffer submitBuffers[] = {_commandBuffers[_currentFrame], guiBuffer};
+    VkCommandBuffer submitBuffers[] = {_commandBuffers[_currentFrame]};//};
 
     VkSemaphore waitSemaphores[] = {_syncObjects.ImageAvailableSemaphores()[_currentFrame]};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
-    submitInfo.commandBufferCount = 2;
+    submitInfo.commandBufferCount = 1; // 2
     submitInfo.pCommandBuffers = submitBuffers;
 
     VkSemaphore signalSemaphores[] = {_syncObjects.RenderingFinishedSemaphores()[_currentFrame]};
@@ -107,7 +112,6 @@ void SceneDrawer::CreateSSBO()
 {
     _storageBuffer.resize(FRAMES_IN_FLIGHT);
 
-    ObjectData ubo {};
     for (int i = 0; i < _storageBuffer.size(); ++i)
         _storageBuffer[i] = std::make_unique<StorageBuffer>(_allocator, _commandPool, _device, _scene->GetObjectsSSBO());
 }
@@ -158,8 +162,8 @@ void SceneDrawer::CreateBufferRecorder()
     squareCommandBufferRecorderInfo._pipeline = _pipeline;
     squareCommandBufferRecorderInfo._swapchain = _swapchain;
     squareCommandBufferRecorderInfo._objects = _scene->GetObjectsSSBO();
-    squareCommandBufferRecorderInfo._vertexBuffer = _scene->GetObjectsSSBO();
-    squareCommandBufferRecorderInfo._indexBuffer = _scene->GetObjectsSSBO();
+    squareCommandBufferRecorderInfo._vertexBuffer = _vertexBuffer->GetBuffer();
+    squareCommandBufferRecorderInfo._indexBuffer = _indexBuffer->GetBuffer();
     squareCommandBufferRecorderInfo._swapchainImageLayouts = &_swapchainImageLayouts;
     squareCommandBufferRecorderInfo._descriptorSets = _descriptorSets;
 
@@ -169,7 +173,7 @@ void SceneDrawer::CreateBufferRecorder()
 void SceneDrawer::CreateDescriptorPool()
 {
     VkDescriptorPoolSize poolSize {};
-    poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     poolSize.descriptorCount = FRAMES_IN_FLIGHT;
 
     VkDescriptorPoolCreateInfo createInfo {};
@@ -184,11 +188,33 @@ void SceneDrawer::CreateDescriptorPool()
 
 void SceneDrawer::CreateScene()
 {
-    std::vector<std::unique_ptr<Renderable>> objects;
-    objects.push_back(std::make_unique<Circle>(5, 36));
+    std::vector<std::shared_ptr<Renderable>> objects;
+
+    std::shared_ptr<Circle> circle1 = std::make_shared<Circle>(0.3, 128, glm::vec3(1, 1, 0));
+    std::shared_ptr<Circle> circle2 = std::make_shared<Circle>(0.3, 128, glm::vec3(1, 1, 1));
+    std::shared_ptr<Circle> circle3 = std::make_shared<Circle>(0.2, 128, glm::vec3(0, 1, 1));
+    std::shared_ptr<Circle> circle4 = std::make_shared<Circle>(0.2, 128, glm::vec3(1, 0, 1));
+
+    circle1->UpdateModel(
+        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.7f, 0.0f))
+    );
+
+    circle2->UpdateModel(
+        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.7f, 0.0f))
+    );
+
+    circle3->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(-0.7f, 0.0f, 0.0f)));
+
+    circle4->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.0f)));
+
+    objects.push_back(circle1);
+    objects.push_back(circle2);
+    objects.push_back(circle4);
+    objects.push_back(circle3);
 
     _scene = std::make_unique<Scene>(objects);
 }
+
 
 void SceneDrawer::CreateVertexBuffer()
 {

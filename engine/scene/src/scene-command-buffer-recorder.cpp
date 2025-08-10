@@ -1,5 +1,7 @@
 #include "../include/scene-command-buffer-recorder.h"
 
+#include <iostream>
+
 void SceneCommandBufferRecorder::RecordCommandBuffer(uint32_t bufferIndex, VkImageView imageView, uint32_t imageIndex) const
 {
     auto& layouts = *_renderingObjects._swapchainImageLayouts;
@@ -95,15 +97,20 @@ void SceneCommandBufferRecorder::RecordCommandBuffer(uint32_t bufferIndex, VkIma
     {
         const auto& obj = _renderingObjects._objects[i];
 
+        vkCmdPushConstants(buffer, _renderingObjects._pipeline->GetPipelineLayout(),
+                   VK_SHADER_STAGE_VERTEX_BIT, 0,
+                   sizeof(uint32_t), &i);
+
         vkCmdDrawIndexed
         (
             buffer,
             obj._indexCount,
             1,
             obj._indexOffset,
-            obj._indexOffset,
-            0
+            0,
+            1
         );
+
     }
 
     vkCmdEndRendering(buffer);

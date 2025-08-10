@@ -14,7 +14,7 @@ private:
 
 public:
 
-    explicit UniformBuffer(const Allocator* allocator, const CommandPool* pool, const LogicalDevice* device, const ObjectData& initial);
+    explicit UniformBuffer(const Allocator* allocator, const CommandPool* pool, const LogicalDevice* device, const UniformObject& initial);
 
     VkBuffer GetBuffer() const { return _buffer.GetBuffer(); }
 

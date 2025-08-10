@@ -1,8 +1,10 @@
 #include "../include/scene.h"
 
+#include <iostream>
+
 #include "../../struct/object-data.h"
 
-Scene::Scene(const std::vector<std::unique_ptr<Renderable>> &objects) : _objects(objects)
+Scene::Scene(const std::vector<std::shared_ptr<Renderable>>& objects) : _objects(objects)
 {
     PrepareScene();
 }
@@ -29,7 +31,6 @@ void Scene::PrepareScene()
         obj._model = shape->GetModelMatrix();
         obj._color = shape->GetColor();
         obj._type = static_cast<int>(shape->GetShapeType());
-        obj._vertexOffset = vertexOffset;
         obj._indexOffset = indexOffset;
         obj._indexCount = indices.size();
 
@@ -41,10 +42,4 @@ void Scene::PrepareScene()
 
     _allVertices = allVertices;
     _allIndices = allIndices;
-}
-
-Scene::~Scene()
-{
-    for (auto& object : _objects)
-        object.reset();
 }

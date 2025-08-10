@@ -10,7 +10,7 @@ class Scene {
 
 private:
 
-    std::vector<std::unique_ptr<Renderable>> _objects;
+    std::vector<std::shared_ptr<Renderable>> _objects;
 
     std::vector<ObjectData> _objectSSBO;
 
@@ -19,7 +19,7 @@ private:
 
 public:
 
-    explicit Scene(const std::vector<std::unique_ptr<Renderable>>& objects);
+    explicit Scene(const std::vector<std::shared_ptr<Renderable>>& objects);
 
     std::vector<ObjectData> GetObjectsSSBO() const { return _objectSSBO; }
 
@@ -27,7 +27,7 @@ public:
 
     std::vector<uint16_t> GetAllIndices() const { return _allIndices; }
 
-    ~Scene();
+    ~Scene() = default;
 
 private:
 
