@@ -2,7 +2,7 @@
 
 enum class ShapeType : int
 {
-    Circle = 0,
-    Triangle = 1,
-    Square = 2,
+    CIRCLE = 0,
+    TRIANGLE = 1,
+    SQUARE = 2,
 };

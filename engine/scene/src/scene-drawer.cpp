@@ -3,13 +3,16 @@
 #include <chrono>
 #include <imgui_impl_vulkan.h>
 #include <random>
-#include <glm/ext/matrix_transform.hpp>
 
 #include "../../../backend/vulkan/buffers/include/storage-buffer.h"
 #include "../../../backend/vulkan/buffers/include/uniform-buffer.h"
 #include "../../../backend/vulkan/include/allocator.h"
-#include "../../struct/object-data.h"
+#include "../../struct/storage-buffer.h"
 #include "../objects/shapes/include/circle.h"
+#include "../objects/shapes/include/square.h"
+#include "../objects/shapes/include/triangle.h"
+#include <glm/glm.hpp>
+#include <glm/ext/matrix_transform.hpp>
 
 SceneDrawer::SceneDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, const Gui* gui) :
                                                                                                                             Renderer(pipeline, swapchain, device),
@@ -161,7 +164,7 @@ void SceneDrawer::CreateBufferRecorder()
     squareCommandBufferRecorderInfo._buffers = &_commandBuffers;
     squareCommandBufferRecorderInfo._pipeline = _pipeline;
     squareCommandBufferRecorderInfo._swapchain = _swapchain;
-    squareCommandBufferRecorderInfo._objects = _scene->GetObjectsSSBO();
+    squareCommandBufferRecorderInfo._objects = _scene->GetObjectData();
     squareCommandBufferRecorderInfo._vertexBuffer = _vertexBuffer->GetBuffer();
     squareCommandBufferRecorderInfo._indexBuffer = _indexBuffer->GetBuffer();
     squareCommandBufferRecorderInfo._swapchainImageLayouts = &_swapchainImageLayouts;
@@ -191,30 +194,27 @@ void SceneDrawer::CreateScene()
     std::vector<std::shared_ptr<Renderable>> objects;
 
     std::shared_ptr<Circle> circle1 = std::make_shared<Circle>(0.3, 128, glm::vec3(1, 1, 0));
-    std::shared_ptr<Circle> circle2 = std::make_shared<Circle>(0.3, 128, glm::vec3(1, 1, 1));
     std::shared_ptr<Circle> circle3 = std::make_shared<Circle>(0.2, 128, glm::vec3(0, 1, 1));
-    std::shared_ptr<Circle> circle4 = std::make_shared<Circle>(0.2, 128, glm::vec3(1, 0, 1));
+    std::shared_ptr<Circle> circle2 = std::make_shared<Circle>(0.2, 128, glm::vec3(1, 0, 1));
 
-    circle1->UpdateModel(
-        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.7f, 0.0f))
-    );
+    std::shared_ptr<Triangle> triangle = std::make_shared<Triangle>(glm::vec3(1, 1, 0));
+    std::shared_ptr<Square> square = std::make_shared<Square>(glm::vec3(1, 1, 1));
 
-    circle2->UpdateModel(
-        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.7f, 0.0f))
-    );
-
+    circle1->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.7f, 0.0f)));
+    circle2->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.0f)));
     circle3->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(-0.7f, 0.0f, 0.0f)));
 
-    circle4->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.0f)));
+    triangle->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    square->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.7f, 0.0f)));
 
     objects.push_back(circle1);
     objects.push_back(circle2);
-    objects.push_back(circle4);
     objects.push_back(circle3);
+    objects.push_back(triangle);
+    objects.push_back(square);
 
     _scene = std::make_unique<Scene>(objects);
 }
-
 
 void SceneDrawer::CreateVertexBuffer()
 {
@@ -245,7 +245,7 @@ void SceneDrawer::CreateDescriptorSets()
         VkDescriptorBufferInfo bufferInfo {};
         bufferInfo.buffer = _storageBuffer[i].get()->GetBuffer();
         bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(ObjectData) * _scene->GetObjectsSSBO().size();
+        bufferInfo.range = sizeof(StorageBufferObject) * _scene->GetObjectsSSBO().size();
 
         VkWriteDescriptorSet descriptorWrite {};
         descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

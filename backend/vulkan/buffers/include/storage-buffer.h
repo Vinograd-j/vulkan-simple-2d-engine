@@ -1,24 +1,25 @@
 #pragma once
+
 #include "buffer.h"
-#include "../../../../engine/struct/object-data.h"
+#include "../../../../engine/struct/storage-buffer.h"
 
 class StorageBuffer
 {
 
 private:
 
-    Buffer<ObjectData> _buffer;
+    Buffer<StorageBufferObject> _buffer;
 
 public:
 
-    explicit StorageBuffer(const Allocator* allocator, const CommandPool* pool, const LogicalDevice* device, const std::vector<ObjectData>& initial);
+    explicit StorageBuffer(const Allocator* allocator, const CommandPool* pool, const LogicalDevice* device, const std::vector<StorageBufferObject>& initial);
 
     VkBuffer GetBuffer() const { return _buffer.GetBuffer(); }
 
-    void Update(const std::vector<ObjectData>& data);
+    void Update(const std::vector<StorageBufferObject>& data);
 
 private:
 
-    void CreateBuffer(const std::vector<ObjectData>& data);
+    void CreateBuffer(const std::vector<StorageBufferObject>& data);
 
 };

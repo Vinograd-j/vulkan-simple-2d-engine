@@ -5,7 +5,7 @@
 #include "../../../backend/vulkan/buffers/include/vertex-buffer.h"
 #include "../../../backend/vulkan/command-buffer/include/command-buffers.h"
 #include "../../pipeline/include/graphics-pipeline.h"
-#include "../../struct/object-data.h"
+#include "../../struct/storage-buffer.h"
 #include "../../swapchain/include/present-swapchain.h"
 
 struct SceneCommandBufferRecorderInfo
