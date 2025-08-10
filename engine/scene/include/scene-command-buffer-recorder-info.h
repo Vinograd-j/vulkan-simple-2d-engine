@@ -1,9 +1,11 @@
 #pragma once
 
+#include "scene.h"
 #include "../../../backend/vulkan/buffers/include/index-buffer.h"
 #include "../../../backend/vulkan/buffers/include/vertex-buffer.h"
 #include "../../../backend/vulkan/command-buffer/include/command-buffers.h"
 #include "../../pipeline/include/graphics-pipeline.h"
+#include "../../struct/storage-buffer.h"
 #include "../../swapchain/include/present-swapchain.h"
 
 struct SceneCommandBufferRecorderInfo
@@ -12,11 +14,12 @@ struct SceneCommandBufferRecorderInfo
 
     const GraphicsPipeline* _pipeline;
 
-    const VertexBuffer* _vertexBuffer;
+    std::vector<ObjectData> _objects;
 
-    const IndexBuffer* _indexBuffer;
+    VkBuffer _vertexBuffer;
+    VkBuffer _indexBuffer;
 
-    CommandBuffers* buffers;
+    CommandBuffers* _buffers;
 
     std::vector<VkImageLayout>* _swapchainImageLayouts;
 

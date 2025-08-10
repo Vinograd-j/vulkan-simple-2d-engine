@@ -1,5 +1,7 @@
 #include "../include/scene-command-buffer-recorder.h"
 
+#include <iostream>
+
 void SceneCommandBufferRecorder::RecordCommandBuffer(uint32_t bufferIndex, VkImageView imageView, uint32_t imageIndex) const
 {
     auto& layouts = *_renderingObjects._swapchainImageLayouts;
@@ -50,8 +52,12 @@ void SceneCommandBufferRecorder::RecordCommandBuffer(uint32_t bufferIndex, VkIma
 
     vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderingObjects._pipeline->GetPipeline());
 
-    auto barrierToRender = _barrier.CreateBarrier(_renderingObjects._swapchain->GetSwapchainImages()[imageIndex],
-                                                  layouts[imageIndex], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    auto barrierToRender = _barrier.CreateBarrier
+    (
+        _renderingObjects._swapchain->GetSwapchainImages()[imageIndex],
+        layouts[imageIndex],
+        VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    );
 
     barrierToRender.srcAccessMask = 0;
     barrierToRender.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -70,19 +76,51 @@ void SceneCommandBufferRecorder::RecordCommandBuffer(uint32_t bufferIndex, VkIma
 
     vkCmdBeginRendering(buffer, &renderingInfo);
 
-    VkBuffer vertexBuffers[] = { _renderingObjects._vertexBuffer->GetBuffer() };
+    vkCmdBindDescriptorSets(
+        buffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        _renderingObjects._pipeline->GetPipelineLayout(),
+        0,
+        1,
+        &_renderingObjects._descriptorSets[bufferIndex],
+        0,
+        nullptr
+    );
+
+    VkBuffer vertexBuffers[] = { _renderingObjects._vertexBuffer };
+
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(buffer, 0, 1, vertexBuffers, offsets);
-    vkCmdBindIndexBuffer(buffer, _renderingObjects._indexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT16);
+    vkCmdBindIndexBuffer(buffer, _renderingObjects._indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-    vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _renderingObjects._pipeline->GetPipelineLayout(), 0, 1, &_renderingObjects._descriptorSets[bufferIndex], 0, nullptr);
+    for (size_t i = 0; i < _renderingObjects._objects.size(); ++i)
+    {
+        const auto& obj = _renderingObjects._objects[i];
 
-    vkCmdDrawIndexed(buffer, _renderingObjects._indexBuffer->GetIndices().size(), 1, 0, 0, 0);
+        vkCmdPushConstants(buffer, _renderingObjects._pipeline->GetPipelineLayout(),
+                   VK_SHADER_STAGE_VERTEX_BIT, 0,
+                   sizeof(uint32_t), &i);
+
+        vkCmdDrawIndexed
+        (
+            buffer,
+            obj._indexCount,
+            1,
+            obj._indexOffset,
+            0,
+            1
+        );
+
+    }
 
     vkCmdEndRendering(buffer);
 
-    auto barrierToPresent = _barrier.CreateBarrier(_renderingObjects._swapchain->GetSwapchainImages()[imageIndex],
-                                                   layouts[imageIndex], VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    auto barrierToPresent = _barrier.CreateBarrier
+    (
+        _renderingObjects._swapchain->GetSwapchainImages()[imageIndex],
+        layouts[imageIndex],
+       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+    );
 
     barrierToPresent.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
     barrierToPresent.dstAccessMask = 0;

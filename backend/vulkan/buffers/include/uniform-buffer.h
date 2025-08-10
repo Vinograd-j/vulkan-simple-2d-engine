@@ -1,7 +1,9 @@
 #pragma once
 
 #include "buffer.h"
-#include "../../../../engine/struct/uniform-object.h"
+#include "../../../../engine/struct/storage-buffer.h"
+
+#include "../../../../engine/struct/uniform-buffer.h"
 
 class UniformBuffer
 {

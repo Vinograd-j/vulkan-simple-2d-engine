@@ -5,12 +5,22 @@ layout(location = 1) in vec3 inColor;
 
 layout(location = 0) out vec3 fragColor;
 
-layout(set = 0, binding = 0) uniform UniformObject {
+struct StorageBufferObject {
     mat4 _model;
     vec3 _color;
 };
 
+layout(set = 0, binding = 1) buffer ObjectBuffer {
+    StorageBufferObject objects[];
+};
+
+layout(push_constant) uniform Push {
+    uint objectIndex;
+} pushData;
+
 void main() {
-    gl_Position = _model * vec4(inPosition, 0.0, 1.0);
-    fragColor = _color;
+    StorageBufferObject obj = objects[pushData.objectIndex];
+
+    gl_Position = obj._model * vec4(inPosition, 0.0, 1.0);
+    fragColor = obj._color;
 }
