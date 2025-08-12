@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <memory>
 
 #include "allocator.h"
@@ -46,6 +47,8 @@ private:
 
     std::unique_ptr<IndexBuffer> _indexBuffer;
     std::unique_ptr<VertexBuffer> _vertexBuffer;
+
+    std::vector<StorageBufferObject> _bufferObjects;
     std::vector<std::unique_ptr<StorageBuffer>> _storageBuffer;
 
 private:
@@ -72,6 +75,7 @@ private:
 
     void CreateBufferRecorder();
 
+    void CreateStorageBufferObjects();
     void CreateSSBO();
     void CreateDescriptorSets();
     void CreateDescriptorPool();
@@ -80,4 +84,6 @@ private:
 
     void CreateVertexBuffer();
     void CreateIndexBuffer();
+
+    void Update(uint32_t currentFrame);
 };

@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <imgui_impl_vulkan.h>
+#include <iostream>
 #include <random>
 
 #include "../../../backend/vulkan/buffers/include/storage-buffer.h"
@@ -28,6 +29,7 @@ SceneDrawer::SceneDrawer(const Allocator* allocator, const CommandPool* pool, co
     CreateScene();
     CreateVertexBuffer();
     CreateIndexBuffer();
+    CreateStorageBufferObjects();
     CreateSSBO();
     CreateDescriptorPool();
     CreateDescriptorSets();
@@ -57,11 +59,11 @@ void SceneDrawer::DrawFrame()
     if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
         throw std::runtime_error("failed to acquire swap chain image");
 
-    //UpdateUniformBuffer(_currentFrame);
+    Update(_currentFrame);
 
     _syncObjects.ResetFence(_currentFrame);
 
-    //_gui->DrawSceneGUI(std::bind(SceneDrawer::ChangeCircleColor, this));
+    //_gui->DrawSceneGUI(objectDatas);
 
     _recorder->RecordCommandBuffer(_currentFrame, _imageViews[imageIndex], imageIndex);
 
@@ -70,14 +72,15 @@ void SceneDrawer::DrawFrame()
     VkSubmitInfo submitInfo {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkCommandBuffer submitBuffers[] = {_commandBuffers[_currentFrame]};//};
+    //VkCommandBuffer submitBuffersGUI[] = {_commandBuffers[_currentFrame], guiBuffer};
+    VkCommandBuffer submitBuffers[] = {_commandBuffers[_currentFrame] };
 
     VkSemaphore waitSemaphores[] = {_syncObjects.ImageAvailableSemaphores()[_currentFrame]};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
-    submitInfo.commandBufferCount = 1; // 2
+    submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = submitBuffers;
 
     VkSemaphore signalSemaphores[] = {_syncObjects.RenderingFinishedSemaphores()[_currentFrame]};
@@ -111,12 +114,176 @@ void SceneDrawer::DrawFrame()
     _currentFrame = (_currentFrame + 1) % FRAMES_IN_FLIGHT;
 }
 
+void SceneDrawer::CreateScene()
+{
+    std::vector<std::shared_ptr<Renderable>> objects;
+
+    std::shared_ptr<Circle> circle1 = std::make_shared<Circle>(0.2, 256, glm::vec3(1, 1, 0));
+    std::shared_ptr<Circle> circle3 = std::make_shared<Circle>(0.3, 256, glm::vec3(0, 1, 1));
+    std::shared_ptr<Circle> circle2 = std::make_shared<Circle>(0.3, 256, glm::vec3(1, 0, 1));
+
+    std::shared_ptr<Triangle> triangle = std::make_shared<Triangle>(glm::vec3(1, 1, 0));
+    std::shared_ptr<Square> square = std::make_shared<Square>(glm::vec3(1, 1, 1));
+
+    circle1->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.7f, 0.0f)));
+    circle2->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.0f)));
+    circle3->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(-0.7f, 0.0f, 0.0f)));
+
+    triangle->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    square->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.7f, 0.0f)));
+
+    objects.push_back(circle1);
+    objects.push_back(circle2);
+    objects.push_back(circle3);
+    objects.push_back(triangle);
+    objects.push_back(square);
+
+    _scene = std::make_unique<Scene>(objects);
+}
+
+void SceneDrawer::CreateStorageBufferObjects()
+{
+    std::vector<StorageBufferObject> bufferObjects;
+
+    auto objects = _scene->GetObjects();
+
+    for (const auto& object : objects)
+    {
+        StorageBufferObject storageBuffer {};
+        storageBuffer._model = object->GetModelMatrix();
+        storageBuffer._color = object->GetColor();
+        bufferObjects.push_back(storageBuffer);
+    }
+
+    _bufferObjects = bufferObjects;
+}
+
 void SceneDrawer::CreateSSBO()
 {
     _storageBuffer.resize(FRAMES_IN_FLIGHT);
 
     for (int i = 0; i < _storageBuffer.size(); ++i)
-        _storageBuffer[i] = std::make_unique<StorageBuffer>(_allocator, _commandPool, _device, _scene->GetObjectsSSBO());
+        _storageBuffer[i] = std::make_unique<StorageBuffer>(_allocator, _commandPool, _device, _bufferObjects);
+}
+
+void SceneDrawer::CreateBufferRecorder()
+{
+    SceneCommandBufferRecorderInfo squareCommandBufferRecorderInfo;
+    squareCommandBufferRecorderInfo._buffers = &_commandBuffers;
+    squareCommandBufferRecorderInfo._pipeline = _pipeline;
+    squareCommandBufferRecorderInfo._swapchain = _swapchain;
+    squareCommandBufferRecorderInfo._objects = _scene->GetObjectData();
+    squareCommandBufferRecorderInfo._vertexBuffer = _vertexBuffer->GetBuffer();
+    squareCommandBufferRecorderInfo._indexBuffer = _indexBuffer->GetBuffer();
+    squareCommandBufferRecorderInfo._swapchainImageLayouts = &_swapchainImageLayouts;
+    squareCommandBufferRecorderInfo._descriptorSets = _descriptorSets;
+
+    _recorder = std::make_unique<SceneCommandBufferRecorder>(squareCommandBufferRecorderInfo);
+}
+
+void SceneDrawer::CreateVertexBuffer()
+{
+    _vertexBuffer = std::make_unique<VertexBuffer>(_allocator, _scene->GetAllVertices(), _commandPool, _device);
+}
+
+void SceneDrawer::CreateIndexBuffer()
+{
+    _indexBuffer = std::make_unique<IndexBuffer>(_allocator, _scene->GetAllIndices(), _commandPool, _device);
+}
+
+
+void SceneDrawer::CreateDescriptorSets()
+{
+    std::vector<VkDescriptorSetLayout> layouts(FRAMES_IN_FLIGHT, _descriptorSetLayout);
+
+    VkDescriptorSetAllocateInfo allocInfo {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = _descriptorPool;
+    allocInfo.descriptorSetCount = FRAMES_IN_FLIGHT;
+    allocInfo.pSetLayouts = layouts.data();
+
+    _descriptorSets.resize(FRAMES_IN_FLIGHT);
+    if (vkAllocateDescriptorSets(_device->GetDevice(), &allocInfo, _descriptorSets.data()) != VK_SUCCESS)
+        throw std::runtime_error("failed to allocate descriptor sets");
+
+    for (int i = 0; i < FRAMES_IN_FLIGHT; ++i)
+    {
+        VkDescriptorBufferInfo bufferInfo {};
+        bufferInfo.buffer = _storageBuffer[i].get()->GetBuffer();
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(StorageBufferObject) * _bufferObjects.size();
+
+        VkWriteDescriptorSet descriptorWrite {};
+        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet = _descriptorSets[i];
+        descriptorWrite.dstBinding = 1;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pBufferInfo = &bufferInfo;
+        descriptorWrite.pImageInfo = nullptr;
+        descriptorWrite.pTexelBufferView = nullptr;
+
+        vkUpdateDescriptorSets(_device->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+    }
+}
+
+void SceneDrawer::Update(uint32_t currentFrame)
+{
+    static auto startTime = std::chrono::high_resolution_clock::now();
+    static auto colorTime = std::chrono::high_resolution_clock::now();
+    static std::vector baseModels(_bufferObjects);
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float elapsedTime = std::chrono::duration<float>(currentTime - startTime).count();
+    float colorElapsed = std::chrono::duration<float>(currentTime - colorTime).count();
+
+    if (colorElapsed >= 1.0f)
+    {
+        std::random_device dev;
+        std::mt19937 rng(dev());
+        std::uniform_real_distribution<float> dist6(0.2f, 1.0f);
+
+        for (auto& obj : _bufferObjects)
+        {
+            obj._color = glm::vec3(dist6(rng), dist6(rng), dist6(rng));
+        }
+
+        colorTime = currentTime;
+    }
+
+    float ampl = 0.1;
+    float speed = 1.2;
+    float yOffset = std::sin(elapsedTime * speed) * ampl;
+
+    float aspect = _swapchain->GetExtent().width / static_cast<float>(_swapchain->GetExtent().height);
+    glm::mat4 aspectFix = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / aspect, 1.0f, 1.0f));
+
+    for (int i = 0; i < _bufferObjects.size(); ++i)
+    {
+        if (_scene->GetObjectData()[i]._type == 0)
+            _bufferObjects[i]._model = aspectFix * baseModels[i]._model * glm::translate(glm::mat4(1.0), glm::vec3(0.0f, yOffset, 0.0f));
+        else
+            _bufferObjects[i]._model = baseModels[i]._model * glm::translate(glm::mat4(1.0), glm::vec3(0.0f, yOffset, 0.0f));
+    }
+
+    _storageBuffer[currentFrame]->Update(_bufferObjects);
+}
+
+void SceneDrawer::CreateDescriptorPool()
+{
+    VkDescriptorPoolSize poolSize {};
+    poolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    poolSize.descriptorCount = FRAMES_IN_FLIGHT;
+
+    VkDescriptorPoolCreateInfo createInfo {};
+    createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    createInfo.poolSizeCount = 1;
+    createInfo.pPoolSizes = &poolSize;
+    createInfo.maxSets = FRAMES_IN_FLIGHT;
+
+    if (vkCreateDescriptorPool(_device->GetDevice(), &createInfo, nullptr, &_descriptorPool) != VK_SUCCESS)
+        throw std::runtime_error("failed to create descriptor pool");
 }
 
 VkImageSubresourceRange SceneDrawer::GetImageSubresourceRange() const
@@ -156,110 +323,6 @@ void SceneDrawer::RecreateSwapchain()
 
     _swapchainImageLayouts.clear();
     _swapchainImageLayouts.resize(_imageViews.size(), VK_IMAGE_LAYOUT_UNDEFINED);
-}
-
-void SceneDrawer::CreateBufferRecorder()
-{
-    SceneCommandBufferRecorderInfo squareCommandBufferRecorderInfo;
-    squareCommandBufferRecorderInfo._buffers = &_commandBuffers;
-    squareCommandBufferRecorderInfo._pipeline = _pipeline;
-    squareCommandBufferRecorderInfo._swapchain = _swapchain;
-    squareCommandBufferRecorderInfo._objects = _scene->GetObjectData();
-    squareCommandBufferRecorderInfo._vertexBuffer = _vertexBuffer->GetBuffer();
-    squareCommandBufferRecorderInfo._indexBuffer = _indexBuffer->GetBuffer();
-    squareCommandBufferRecorderInfo._swapchainImageLayouts = &_swapchainImageLayouts;
-    squareCommandBufferRecorderInfo._descriptorSets = _descriptorSets;
-
-    _recorder = std::make_unique<SceneCommandBufferRecorder>(squareCommandBufferRecorderInfo);
-}
-
-void SceneDrawer::CreateDescriptorPool()
-{
-    VkDescriptorPoolSize poolSize {};
-    poolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    poolSize.descriptorCount = FRAMES_IN_FLIGHT;
-
-    VkDescriptorPoolCreateInfo createInfo {};
-    createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    createInfo.poolSizeCount = 1;
-    createInfo.pPoolSizes = &poolSize;
-    createInfo.maxSets = FRAMES_IN_FLIGHT;
-
-    if (vkCreateDescriptorPool(_device->GetDevice(), &createInfo, nullptr, &_descriptorPool) != VK_SUCCESS)
-        throw std::runtime_error("failed to create descriptor pool");
-}
-
-void SceneDrawer::CreateScene()
-{
-    std::vector<std::shared_ptr<Renderable>> objects;
-
-    std::shared_ptr<Circle> circle1 = std::make_shared<Circle>(0.3, 128, glm::vec3(1, 1, 0));
-    std::shared_ptr<Circle> circle3 = std::make_shared<Circle>(0.2, 128, glm::vec3(0, 1, 1));
-    std::shared_ptr<Circle> circle2 = std::make_shared<Circle>(0.2, 128, glm::vec3(1, 0, 1));
-
-    std::shared_ptr<Triangle> triangle = std::make_shared<Triangle>(glm::vec3(1, 1, 0));
-    std::shared_ptr<Square> square = std::make_shared<Square>(glm::vec3(1, 1, 1));
-
-    circle1->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.7f, 0.0f)));
-    circle2->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.0f)));
-    circle3->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(-0.7f, 0.0f, 0.0f)));
-
-    triangle->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
-    square->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.7f, 0.0f)));
-
-    objects.push_back(circle1);
-    objects.push_back(circle2);
-    objects.push_back(circle3);
-    objects.push_back(triangle);
-    objects.push_back(square);
-
-    _scene = std::make_unique<Scene>(objects);
-}
-
-void SceneDrawer::CreateVertexBuffer()
-{
-    _vertexBuffer = std::make_unique<VertexBuffer>(_allocator, _scene->GetAllVertices(), _commandPool, _device);
-}
-
-void SceneDrawer::CreateIndexBuffer()
-{
-    _indexBuffer = std::make_unique<IndexBuffer>(_allocator, _scene->GetAllIndices(), _commandPool, _device);
-}
-
-void SceneDrawer::CreateDescriptorSets()
-{
-    std::vector<VkDescriptorSetLayout> layouts(FRAMES_IN_FLIGHT, _descriptorSetLayout);
-
-    VkDescriptorSetAllocateInfo allocInfo {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = _descriptorPool;
-    allocInfo.descriptorSetCount = FRAMES_IN_FLIGHT;
-    allocInfo.pSetLayouts = layouts.data();
-
-    _descriptorSets.resize(FRAMES_IN_FLIGHT);
-    if (vkAllocateDescriptorSets(_device->GetDevice(), &allocInfo, _descriptorSets.data()) != VK_SUCCESS)
-        throw std::runtime_error("failed to allocate descriptor sets");
-
-    for (int i = 0; i < FRAMES_IN_FLIGHT; ++i)
-    {
-        VkDescriptorBufferInfo bufferInfo {};
-        bufferInfo.buffer = _storageBuffer[i].get()->GetBuffer();
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(StorageBufferObject) * _scene->GetObjectsSSBO().size();
-
-        VkWriteDescriptorSet descriptorWrite {};
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet = _descriptorSets[i];
-        descriptorWrite.dstBinding = 1;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = &bufferInfo;
-        descriptorWrite.pImageInfo = nullptr;
-        descriptorWrite.pTexelBufferView = nullptr;
-
-        vkUpdateDescriptorSets(_device->GetDevice(), 1, &descriptorWrite, 0, nullptr);
-    }
 }
 
 SceneDrawer::~SceneDrawer()
