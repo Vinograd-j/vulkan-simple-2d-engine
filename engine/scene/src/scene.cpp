@@ -7,6 +7,12 @@ Scene::Scene(const std::vector<std::shared_ptr<Renderable>>& objects) : _objects
     PrepareScene();
 }
 
+void Scene::AddObject(const std::shared_ptr<Renderable> &object)
+{
+    _objects.push_back(object);
+    PrepareScene();
+}
+
 void Scene::PrepareScene()
 {
     std::vector<Vertex> allVertices;

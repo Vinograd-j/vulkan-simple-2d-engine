@@ -1,8 +1,9 @@
 #pragma once
+
 #include <vector>
 
 #include "../../gui/include/im-gui.h"
-#include "../objects/object-data.h"
+#include "../../struct/storage-buffer.h"
 
 class Gui
 {
@@ -17,6 +18,6 @@ public:
 
     VkCommandBuffer PrepareCommandBuffer(uint32_t imageIndex, const VkImageView& imageView) const;
 
-    void DrawSceneGUI(std::vector<ObjectData>& objects) const;
+    void DrawSceneGUI(std::vector<StorageBufferObject>& objects);
 
 };

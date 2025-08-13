@@ -15,7 +15,7 @@
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-SceneDrawer::SceneDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, const Gui* gui) :
+SceneDrawer::SceneDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, Gui* gui) :
                                                                                                                             Renderer(pipeline, swapchain, device),
                                                                                                                             _allocator(allocator),
                                                                                                                             _commandPool(pool),
@@ -63,25 +63,25 @@ void SceneDrawer::DrawFrame()
 
     _syncObjects.ResetFence(_currentFrame);
 
-    //_gui->DrawSceneGUI(objectDatas);
+    _gui->DrawSceneGUI(_bufferObjects);
 
     _recorder->RecordCommandBuffer(_currentFrame, _imageViews[imageIndex], imageIndex);
 
-    //VkCommandBuffer guiBuffer = _gui->PrepareCommandBuffer(imageIndex, _imageViews[imageIndex]);
+    VkCommandBuffer guiBuffer = _gui->PrepareCommandBuffer(imageIndex, _imageViews[imageIndex]);
 
     VkSubmitInfo submitInfo {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    //VkCommandBuffer submitBuffersGUI[] = {_commandBuffers[_currentFrame], guiBuffer};
-    VkCommandBuffer submitBuffers[] = {_commandBuffers[_currentFrame] };
+    VkCommandBuffer submitBuffersGUI[] = {_commandBuffers[_currentFrame], guiBuffer};
+    //VkCommandBuffer submitBuffers[] = {_commandBuffers[_currentFrame] };
 
     VkSemaphore waitSemaphores[] = {_syncObjects.ImageAvailableSemaphores()[_currentFrame]};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = submitBuffers;
+    submitInfo.commandBufferCount = 2;
+    submitInfo.pCommandBuffers = submitBuffersGUI;
 
     VkSemaphore signalSemaphores[] = {_syncObjects.RenderingFinishedSemaphores()[_currentFrame]};
     submitInfo.signalSemaphoreCount = 1;
@@ -231,26 +231,26 @@ void SceneDrawer::CreateDescriptorSets()
 void SceneDrawer::Update(uint32_t currentFrame)
 {
     static auto startTime = std::chrono::high_resolution_clock::now();
-    static auto colorTime = std::chrono::high_resolution_clock::now();
+    //static auto colorTime = std::chrono::high_resolution_clock::now();
     static std::vector baseModels(_bufferObjects);
 
     auto currentTime = std::chrono::high_resolution_clock::now();
     float elapsedTime = std::chrono::duration<float>(currentTime - startTime).count();
-    float colorElapsed = std::chrono::duration<float>(currentTime - colorTime).count();
+    //float colorElapsed = std::chrono::duration<float>(currentTime - colorTime).count();
 
-    if (colorElapsed >= 1.0f)
-    {
-        std::random_device dev;
-        std::mt19937 rng(dev());
-        std::uniform_real_distribution<float> dist6(0.2f, 1.0f);
-
-        for (auto& obj : _bufferObjects)
-        {
-            obj._color = glm::vec3(dist6(rng), dist6(rng), dist6(rng));
-        }
-
-        colorTime = currentTime;
-    }
+    // if (colorElapsed >= 1.0f)
+    // {
+    //     std::random_device dev;
+    //     std::mt19937 rng(dev());
+    //     std::uniform_real_distribution<float> dist6(0.2f, 1.0f);
+    //
+    //     for (auto& obj : _bufferObjects)
+    //     {
+    //         obj._color = glm::vec3(dist6(rng), dist6(rng), dist6(rng));
+    //     }
+    //
+    //     colorTime = currentTime;
+    // }
 
     float ampl = 0.1;
     float speed = 1.2;

@@ -27,7 +27,7 @@ private:
 
     CommandBuffers _commandBuffers;
 
-    const Gui* const _gui;
+    Gui* const _gui;
 
     std::unique_ptr<Scene> _scene;
 
@@ -57,7 +57,7 @@ private:
 
 public:
 
-    explicit SceneDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, const Gui* gui);
+    explicit SceneDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, Gui* gui);
 
     void DrawFrame() override;
 
