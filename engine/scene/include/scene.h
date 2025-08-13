@@ -3,7 +3,6 @@
 #include <memory>
 #include <vector>
 
-#include "../../struct/storage-buffer.h"
 #include "../objects/object-data.h"
 #include "../objects/include/renderable.h"
 
@@ -14,7 +13,6 @@ private:
     std::vector<std::shared_ptr<Renderable>> _objects;
 
     std::vector<ObjectData> _objectDatas;
-    std::vector<StorageBufferObject> _objectSSBO;
 
     std::vector<Vertex> _allVertices;
     std::vector<uint16_t> _allIndices;
@@ -22,13 +20,16 @@ private:
 public:
 
     explicit Scene(const std::vector<std::shared_ptr<Renderable>>& objects);
+    explicit Scene() = default;
 
-    std::vector<StorageBufferObject> GetObjectsSSBO() const { return _objectSSBO; }
+    void AddObject(const std::shared_ptr<Renderable>& object);
+
     std::vector<ObjectData> GetObjectData() const { return _objectDatas; }
 
     std::vector<Vertex> GetAllVertices() const { return _allVertices; }
-
     std::vector<uint16_t> GetAllIndices() const { return _allIndices; }
+
+    std::vector<std::shared_ptr<Renderable>> GetObjects() const { return _objects; }
 
     ~Scene() = default;
 

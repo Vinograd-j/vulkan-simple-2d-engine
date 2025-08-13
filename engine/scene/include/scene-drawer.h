@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <memory>
 
 #include "allocator.h"
@@ -26,7 +27,7 @@ private:
 
     CommandBuffers _commandBuffers;
 
-    const Gui* const _gui;
+    Gui* const _gui;
 
     std::unique_ptr<Scene> _scene;
 
@@ -46,6 +47,8 @@ private:
 
     std::unique_ptr<IndexBuffer> _indexBuffer;
     std::unique_ptr<VertexBuffer> _vertexBuffer;
+
+    std::vector<StorageBufferObject> _bufferObjects;
     std::vector<std::unique_ptr<StorageBuffer>> _storageBuffer;
 
 private:
@@ -54,7 +57,7 @@ private:
 
 public:
 
-    explicit SceneDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, const Gui* gui);
+    explicit SceneDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, Gui* gui);
 
     void DrawFrame() override;
 
@@ -72,6 +75,7 @@ private:
 
     void CreateBufferRecorder();
 
+    void CreateStorageBufferObjects();
     void CreateSSBO();
     void CreateDescriptorSets();
     void CreateDescriptorPool();
@@ -80,4 +84,6 @@ private:
 
     void CreateVertexBuffer();
     void CreateIndexBuffer();
+
+    void Update(uint32_t currentFrame) const;
 };

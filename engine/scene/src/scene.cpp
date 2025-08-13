@@ -1,10 +1,15 @@
 #include "../include/scene.h"
 
-#include "../../struct/storage-buffer.h"
 #include "../objects/object-data.h"
 
 Scene::Scene(const std::vector<std::shared_ptr<Renderable>>& objects) : _objects(objects)
 {
+    PrepareScene();
+}
+
+void Scene::AddObject(const std::shared_ptr<Renderable> &object)
+{
+    _objects.push_back(object);
     PrepareScene();
 }
 
@@ -25,11 +30,6 @@ void Scene::PrepareScene()
 
         for (auto index : indices)
             allIndices.push_back(index + vertexOffset);
-
-        StorageBufferObject obj {};
-        obj._model = shape->GetModelMatrix();
-        obj._color = shape->GetColor();
-        _objectSSBO.push_back(obj);
 
         ObjectData objectData {};
         objectData._type = static_cast<int>(shape->GetShapeType());
