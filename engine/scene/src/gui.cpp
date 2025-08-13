@@ -38,13 +38,17 @@ void Gui::DrawSceneGUI(std::vector<StorageBufferObject>& objects)
             ImGui::OpenPopup(("ColorPicker##" + std::to_string(i)).c_str());
         }
 
-        // Всплывающее окно с палитрой
         if (ImGui::BeginPopup(("ColorPicker##" + std::to_string(i)).c_str()))
         {
             ImGui::Text("Pick a color:");
             ImGui::ColorEdit3(("##edit" + std::to_string(i)).c_str(), &obj._color.x);
             ImGui::EndPopup();
         }
+
+        ImGui::PushID(i);
+        ImGui::SliderFloat("X", &obj._model[3].x, -0.39, 0.39);
+        ImGui::SliderFloat("Y", &obj._model[3].y, -0.4, 0.4);
+        ImGui::PopID();
     }
 
     ImGui::End();

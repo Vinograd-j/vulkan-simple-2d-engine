@@ -85,5 +85,5 @@ private:
     void CreateVertexBuffer();
     void CreateIndexBuffer();
 
-    void Update(uint32_t currentFrame);
+    void Update(uint32_t currentFrame) const;
 };

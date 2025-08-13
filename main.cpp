@@ -146,8 +146,8 @@ int main()
     std::unique_ptr<Surface> surface = std::make_unique<Surface>(instance->GetInstance(), window.WindowPointer());
 
     std::unique_ptr<PhysicalDevice> device = std::make_unique<PhysicalDevice>(instance->GetInstance(), surface->GetSurface(), deviceExtensions);
-    device->ChoosePhysicalDevice(7443, 4318); // LAPTOP
-    //device->ChoosePhysicalDevice(7942, 4318);
+    //device->ChoosePhysicalDevice(7443, 4318); // LAPTOP
+    device->ChoosePhysicalDevice(7942, 4318);
     std::unique_ptr<LogicalDevice> logicalDevice = std::make_unique<LogicalDevice>(*device);
 
     std::unique_ptr<PresentSwapchain> swapchain = std::make_unique<PresentSwapchain>(device.get(), logicalDevice.get(), window.WindowPointer(), surface->GetSurface(), VK_NULL_HANDLE);
