@@ -2,6 +2,4 @@
 
 ## You may see progress using this GIF (Photo). I will update it when new visual changes appear. This will help you understand the current stage of the app development.
 
-<img width="800" height="593" alt="image" src="https://github.com/user-attachments/assets/0d115a1c-4275-4380-b26a-97023b21d761" />
-
-
+![ezgif-737cbcc2a9a416](https://github.com/user-attachments/assets/875563d2-96ce-4325-bab5-9fa19ed825da)
