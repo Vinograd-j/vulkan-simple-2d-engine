@@ -1,5 +1,7 @@
 # Vulkan simple 2d engine
 
-## You may see progress using this GIF. I will update it when new visual changes appear. This will help you understand the current stage of the app development.
+## You may see progress using this GIF (Photo). I will update it when new visual changes appear. This will help you understand the current stage of the app development.
 
-![ezgif-2cbfbd2f13cf5a](https://github.com/user-attachments/assets/d0e3f811-0b5a-455c-b98a-835270ed1946)
+<img width="800" height="593" alt="image" src="https://github.com/user-attachments/assets/0d115a1c-4275-4380-b26a-97023b21d761" />
+
+
