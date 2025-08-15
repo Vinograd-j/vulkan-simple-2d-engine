@@ -1,8 +1,7 @@
 #include "../include/square.h"
 
-Square::Square(const glm::vec3& color)
+Square::Square()
 {
-    _color = color;
     Square::CreateVertices();
     Square::CreateIndices();
 }

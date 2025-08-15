@@ -13,7 +13,7 @@ private:
 
 public:
 
-    explicit Circle(float radius, int segmentCount, const glm::vec3& color);
+    explicit Circle(float radius, int segmentCount);
 
     ~Circle() override = default;
 

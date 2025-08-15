@@ -1,8 +1,7 @@
 #include "../include/triangle.h"
 
-Triangle::Triangle(const glm::vec3& color)
+Triangle::Triangle()
 {
-    _color = color;
     Triangle::CreateVertices();
     Triangle::CreateIndices();
 }

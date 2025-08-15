@@ -45,12 +45,6 @@ private:
     VkDescriptorPool _descriptorPool;
     std::vector<VkDescriptorSet> _descriptorSets;
 
-    std::unique_ptr<IndexBuffer> _indexBuffer;
-    std::unique_ptr<VertexBuffer> _vertexBuffer;
-
-    std::vector<StorageBufferObject> _bufferObjects;
-    std::vector<std::unique_ptr<StorageBuffer>> _storageBuffer;
-
 private:
 
     uint32_t _currentFrame = 0;
@@ -75,15 +69,11 @@ private:
 
     void CreateBufferRecorder();
 
-    void CreateStorageBufferObjects();
-    void CreateSSBO();
     void CreateDescriptorSets();
     void CreateDescriptorPool();
+    void UpdateDescriptorSets(uint32_t frameIndex) const;
 
     void CreateScene();
 
-    void CreateVertexBuffer();
-    void CreateIndexBuffer();
-
-    void Update(uint32_t currentFrame) const;
+    void Update(uint32_t currentFrame);
 };

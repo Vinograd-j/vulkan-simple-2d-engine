@@ -7,7 +7,7 @@ class Square : public Renderable
 
 public:
 
-    explicit Square(const glm::vec3& color);
+    explicit Square();
 
 public:
 

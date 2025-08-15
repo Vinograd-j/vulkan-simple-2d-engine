@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "scene.h"
 #include "../../gui/include/im-gui.h"
 #include "../../struct/storage-buffer.h"
 
@@ -18,6 +19,6 @@ public:
 
     VkCommandBuffer PrepareCommandBuffer(uint32_t imageIndex, const VkImageView& imageView) const;
 
-    void DrawSceneGUI(std::vector<StorageBufferObject>& objects);
+    void DrawSceneGUI(Scene& scene) const;
 
 };

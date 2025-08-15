@@ -4,20 +4,25 @@
 #include <imgui_impl_vulkan.h>
 
 #include "../../../backend/vulkan/buffers/include/storage-buffer.h"
-#include "../objects/object-data.h"
+#include "../include/scene.h"
+#include "../objects/shapes/include/circle.h"
+#include "../objects/shapes/include/square.h"
+#include "../objects/shapes/include/triangle.h"
 
 VkCommandBuffer Gui::PrepareCommandBuffer(uint32_t imageIndex, const VkImageView& imageView) const
 {
     return _gui->PrepareCommandBuffer(imageIndex, imageView);
 }
 
-void Gui::DrawSceneGUI(std::vector<StorageBufferObject>& objects)
+void Gui::DrawSceneGUI(Scene& scene) const
 {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
     ImGui::Begin("Objects on the scene");
+
+    auto& objects = scene.GetBufferObjects();
 
     for (size_t i = 0; i < objects.size(); ++i)
     {
@@ -50,6 +55,13 @@ void Gui::DrawSceneGUI(std::vector<StorageBufferObject>& objects)
         ImGui::SliderFloat("Y", &obj._model[3].y, -0.4, 0.4);
         ImGui::PopID();
     }
+
+    if (ImGui::Button("Add New Circle"))
+        scene.AddObject(std::make_shared<Circle>(2, 512));
+    if (ImGui::Button("Add New Triangle"))
+        scene.AddObject(std::make_shared<Triangle>());
+    if (ImGui::Button("Add New Square"))
+        scene.AddObject(std::make_shared<Square>());
 
     ImGui::End();
     ImGui::Render();

@@ -3,7 +3,6 @@
 #include "buffer.h"
 #include "../../../../engine/struct/vertex.h"
 
-
 class VertexBuffer
 {
 

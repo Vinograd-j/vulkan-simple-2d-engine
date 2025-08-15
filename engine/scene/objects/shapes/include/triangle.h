@@ -6,7 +6,7 @@ class Triangle : public Renderable
 
 public:
 
-    explicit Triangle(const glm::vec3& color);
+    explicit Triangle();
 
 public:
 

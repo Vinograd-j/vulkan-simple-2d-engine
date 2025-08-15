@@ -3,9 +3,8 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/scalar_constants.hpp>
 
-Circle::Circle(float radius, int segmentCount, const glm::vec3& color) : _radius(radius), _segmentCount(segmentCount)
+Circle::Circle(float radius, int segmentCount) : _radius(radius), _segmentCount(segmentCount)
 {
-    _color = color;
     GenerateCircle();
 }
 
