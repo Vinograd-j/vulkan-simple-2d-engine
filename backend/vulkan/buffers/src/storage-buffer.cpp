@@ -1,14 +1,21 @@
 #include "../include/storage-buffer.h"
 
-StorageBuffer::StorageBuffer(const Allocator* allocator, const CommandPool* pool, const LogicalDevice* device, const std::vector<StorageBufferObject>& initial) :
-                                                        _buffer(allocator, pool, device)
+StorageBuffer::StorageBuffer(const Allocator* allocator, const CommandPool* pool, const LogicalDevice* device) :
+                                                                                                                _buffer(allocator, pool, device)
 {
-    CreateBuffer(initial);
+    CreateBuffer();
 }
 
-void StorageBuffer::CreateBuffer(const std::vector<StorageBufferObject>& data)
+void StorageBuffer::CreateBuffer()
 {
-    _buffer.CreateBufferMapped(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, data);
+    VkDeviceSize size = 40ull * 1024ull * 1024ull;
+
+    _buffer.CreateBufferMapped(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, size);
+}
+
+void StorageBuffer::AddBuffer(const StorageBufferObject& data, VkDeviceSize offset)
+{
+    _buffer.UploadData(&data, offset);
 }
 
 void StorageBuffer::Update(const std::vector<StorageBufferObject> &data)

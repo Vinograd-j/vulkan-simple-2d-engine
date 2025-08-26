@@ -12,7 +12,9 @@ private:
 
 public:
 
-    explicit StorageBuffer(const Allocator* allocator, const CommandPool* pool, const LogicalDevice* device, const std::vector<StorageBufferObject>& initial);
+    explicit StorageBuffer(const Allocator* allocator, const CommandPool* pool, const LogicalDevice* device);
+
+    void AddBuffer(const StorageBufferObject& data, VkDeviceSize offset);
 
     VkBuffer GetBuffer() const { return _buffer.GetBuffer(); }
 
@@ -20,6 +22,6 @@ public:
 
 private:
 
-    void CreateBuffer(const std::vector<StorageBufferObject>& data);
+    void CreateBuffer();
 
 };

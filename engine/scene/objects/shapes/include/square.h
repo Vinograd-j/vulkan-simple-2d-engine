@@ -15,7 +15,7 @@ public:
 
     const std::vector<uint16_t> GetIndices() const override { return _indices; };
 
-    ShapeType GetShapeType() const override { return ShapeType::TRIANGLE; };
+    ShapeType GetShapeType() const override { return ShapeType::SQUARE; };
 
 public:
 

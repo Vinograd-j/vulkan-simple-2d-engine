@@ -9,7 +9,7 @@
 #include "../../../backend/vulkan/buffers/include/uniform-buffer.h"
 #include "../../../backend/vulkan/include/allocator.h"
 #include "../../struct/storage-buffer.h"
-#include "../objects/shapes/include/circle.h"
+#include "../objects/shapes/include/triangle.h"
 
 SceneDrawer::SceneDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, Gui* gui) :
                                                                                                                             Renderer(pipeline, swapchain, device),
@@ -34,8 +34,6 @@ SceneDrawer::SceneDrawer(const Allocator* allocator, const CommandPool* pool, co
 
 void SceneDrawer::DrawFrame()
 {
-    _scene->RequestRebuild();
-
     const VkQueue graphicsQueue = _device->GetQueues().at(GRAPHICS);
     const VkQueue presentQueue = _device->GetQueues().at(PRESENT);
 
@@ -57,7 +55,8 @@ void SceneDrawer::DrawFrame()
 
     Update(_currentFrame);
 
-    _recorder->RecordCommandBuffer(_currentFrame, _imageViews[imageIndex], imageIndex);
+    if (_scene->GetBufferObjectsSize() != 0)
+        _recorder->RecordCommandBuffer(_currentFrame, _imageViews[imageIndex], imageIndex);
 
     _gui->DrawSceneGUI(*_scene);
 
@@ -68,7 +67,8 @@ void SceneDrawer::DrawFrame()
 
     std::vector<VkCommandBuffer> commandBuffers;
 
-    commandBuffers.push_back(_commandBuffers[_currentFrame]);
+    if (_scene->GetBufferObjectsSize() != 0)
+        commandBuffers.push_back(_commandBuffers[_currentFrame]);
     commandBuffers.push_back(guiBuffer);
 
     VkSemaphore waitSemaphores[] = {_syncObjects.ImageAvailableSemaphores()[_currentFrame]};
@@ -76,7 +76,7 @@ void SceneDrawer::DrawFrame()
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
-    submitInfo.commandBufferCount = 2;
+    submitInfo.commandBufferCount = commandBuffers.size();
     submitInfo.pCommandBuffers = commandBuffers.data();
 
     VkSemaphore signalSemaphores[] = {_syncObjects.RenderingFinishedSemaphores()[_currentFrame]};
@@ -112,40 +112,13 @@ void SceneDrawer::DrawFrame()
 
 void SceneDrawer::CreateScene()
 {
-    std::vector<std::shared_ptr<Renderable>> objects;
-    //
-    std::shared_ptr<Circle> circle1 = std::make_shared<Circle>(0.1, 256);
-    // std::shared_ptr<Circle> circle3 = std::make_shared<Circle>(0.1, 256);
-    // std::shared_ptr<Circle> circle2 = std::make_shared<Circle>(0.1, 256);
-    //
-    // std::shared_ptr<Triangle> triangle = std::make_shared<Triangle>();
-    // std::shared_ptr<Triangle> triangle2 = std::make_shared<Triangle>();
-    // std::shared_ptr<Triangle> triangle3 = std::make_shared<Triangle>();
-    // std::shared_ptr<Square> square = std::make_shared<Square>();
-    //
-    // circle1->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.7f, 0.0f)));
-    // circle2->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.0f)));
-    // circle3->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(-0.7f, 0.0f, 0.0f)));
-    //
-    // triangle->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.7f)));
-    // triangle2->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.7f)));
-    // triangle3->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.9f)));
-    // square->UpdateModel(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.7f, 0.0f)));
-    //
-    objects.push_back(circle1);
-    // objects.push_back(circle2);
-    // objects.push_back(circle3);
-    // objects.push_back(triangle);
-    // objects.push_back(triangle2);
-    // objects.push_back(triangle3);
-    // objects.push_back(square);
-
-    _scene = std::make_unique<Scene>(objects, _commandPool, _allocator, _device);
+    _scene = std::make_unique<Scene>(_commandPool, _allocator, _device);
+    _scene->AddObject(std::make_shared<Triangle>());
 }
 
 void SceneDrawer::CreateDescriptorSets()
 {
-    std::vector<VkDescriptorSetLayout> layouts(FRAMES_IN_FLIGHT, _descriptorSetLayout);
+    std::vector layouts(FRAMES_IN_FLIGHT, _descriptorSetLayout);
 
     VkDescriptorSetAllocateInfo allocInfo {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -157,6 +130,8 @@ void SceneDrawer::CreateDescriptorSets()
     if (vkAllocateDescriptorSets(_device->GetDevice(), &allocInfo, _descriptorSets.data()) != VK_SUCCESS)
         throw std::runtime_error("failed to allocate descriptor sets");
 
+    if (_scene->GetBufferObjectsSize() == 0) return;
+
     for (int i = 0; i < FRAMES_IN_FLIGHT; ++i)
         UpdateDescriptorSets(i);
 }
@@ -165,8 +140,9 @@ void SceneDrawer::UpdateDescriptorSets(uint32_t frameIndex) const
 {
     auto storageBuffers = _scene->GetStorageBuffers();
 
+    if (storageBuffers.size() == 0) return;
+
     VkDescriptorBufferInfo bufferInfo {};
-    bufferInfo.buffer = storageBuffers[frameIndex]->GetBuffer();
     bufferInfo.buffer = storageBuffers[frameIndex]->GetBuffer();
     bufferInfo.offset = 0;
     bufferInfo.range = sizeof(StorageBufferObject) * _scene->GetBufferObjectsSize();
@@ -222,7 +198,6 @@ void SceneDrawer::CreateDescriptorPool()
     if (vkCreateDescriptorPool(_device->GetDevice(), &createInfo, nullptr, &_descriptorPool) != VK_SUCCESS)
         throw std::runtime_error("failed to create descriptor pool");
 }
-
 
 VkImageSubresourceRange SceneDrawer::GetImageSubresourceRange() const
 {

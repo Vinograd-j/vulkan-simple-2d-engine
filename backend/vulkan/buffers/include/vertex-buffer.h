@@ -14,7 +14,9 @@ private:
 
 public:
 
-    explicit VertexBuffer(const Allocator* allocator, const std::vector<Vertex>& vertices, const CommandPool* pool, const LogicalDevice* device);
+    explicit VertexBuffer(const Allocator* allocator, const CommandPool* pool, const LogicalDevice* device);
+
+    void AddVertices(const std::vector<Vertex>& vertices, VkDeviceSize offset);
 
     std::vector<Vertex> GetVertices() const { return _vertices; }
 

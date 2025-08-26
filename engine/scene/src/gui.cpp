@@ -2,8 +2,8 @@
 
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+#include <iostream>
 
-#include "../../../backend/vulkan/buffers/include/storage-buffer.h"
 #include "../include/scene.h"
 #include "../objects/shapes/include/circle.h"
 #include "../objects/shapes/include/square.h"
@@ -51,16 +51,16 @@ void Gui::DrawSceneGUI(Scene& scene) const
         }
 
         ImGui::PushID(i);
-        ImGui::SliderFloat("X", &obj._model[3].x, -0.39, 0.39);
-        ImGui::SliderFloat("Y", &obj._model[3].y, -0.4, 0.4);
+        ImGui::SliderFloat("X", &obj._model[3].x, -5, 5);
+        ImGui::SliderFloat("Y", &obj._model[3].y, -5, 5);
         ImGui::PopID();
     }
 
-    if (ImGui::Button("Add New Circle"))
-        scene.AddObject(std::make_shared<Circle>(2, 512));
-    if (ImGui::Button("Add New Triangle"))
+    if (ImGui::Button("Add New Circle##add_circle"))
+        scene.AddObject(std::make_shared<Circle>(0.3, 512));
+    if (ImGui::Button("Add New Triangle##add_triangle"))
         scene.AddObject(std::make_shared<Triangle>());
-    if (ImGui::Button("Add New Square"))
+    if (ImGui::Button("Add New Square##add_square"))
         scene.AddObject(std::make_shared<Square>());
 
     ImGui::End();

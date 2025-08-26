@@ -16,7 +16,9 @@ private:
 
 public:
 
-    explicit IndexBuffer(const Allocator* allocator, const std::vector<uint16_t>& vertices, const CommandPool* pool, const LogicalDevice* device);
+    explicit IndexBuffer(const Allocator* allocator, const CommandPool* pool, const LogicalDevice* device);
+
+    void AddIndices(const std::vector<uint16_t>& indices, VkDeviceSize offset);
 
     std::vector<uint16_t> GetIndices() const { return _indices; }
 

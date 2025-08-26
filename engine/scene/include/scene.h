@@ -34,7 +34,8 @@ private:
     const Allocator* const _allocator;
     const LogicalDevice* const _device;
 
-    bool _needsRebuild;
+    uint32_t _currentVertexOffset = 0;
+    uint32_t _currentIndexOffset = 0;
 
 public:
 
@@ -42,11 +43,14 @@ public:
 
     explicit Scene(const CommandPool* commandPool, const Allocator* allocator, const LogicalDevice* device) : _commandPool(commandPool),
                                                                                                               _allocator(allocator),
-                                                                                                              _device(device),
-                                                                                                              _needsRebuild(false){}
+                                                                                                              _device(device)
+    {
+        CreateVertexBuffer();
+        CreateIndexBuffer();
+        CreateSSBO();
+    }
 
     void AddObject(const std::shared_ptr<Renderable>& object);
-    void RequestRebuild();
 
     std::vector<ObjectData> GetObjectData() const { return _objectDatas; }
 
@@ -60,8 +64,6 @@ public:
     ~Scene();
 
 private:
-
-    void PrepareScene();
 
     void CreateSSBO();
 

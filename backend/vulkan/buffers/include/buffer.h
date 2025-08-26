@@ -29,9 +29,12 @@ public:
 
     void CreateBuffer(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const std::vector<T>& data);
     void CreateBuffer(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const T& data);
+    void CreateBuffer(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const VkDeviceSize& size);
 
     void CreateBufferMapped(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const std::vector<T>& data);
     void CreateBufferMapped(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const T& data);
+
+    void CreateBufferMapped(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, VkDeviceSize size);
 
     void CreateBufferWithStaging(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, std::vector<T> data);
 
@@ -40,11 +43,18 @@ public:
     void UpdateData(const T* data, size_t count = 1);
     void UpdateData(const std::vector<T>& data);
 
+    void UploadData(const std::vector<T>& data, VkDeviceSize offset);
+    void UploadData(const T* data, VkDeviceSize offset);
+
     ~Buffer();
 
 private:
 
     void CopyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) const;
+
+    void CopyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size, VkDeviceSize offset) const;
+
+    void UploadDataGeneric(const T* data, const VkDeviceSize& dataSize, VkDeviceSize offset);
 
     void CreateBuffer(const void* srcData, VkDeviceSize size, const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const VmaAllocationCreateFlags& flags);
 
@@ -77,13 +87,57 @@ void Buffer<T>::CreateBuffer(const void* srcData, VkDeviceSize size, const VkBuf
 template<typename T>
 void Buffer<T>::CreateBuffer(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const std::vector<T>& data)
 {
-    CreateBuffer(data.data(), sizeof(T) * data.size(), usage, memoryUsage);
+    CreateBuffer(data.data(), sizeof(T) * data.size(), usage, memoryUsage, 0);
 }
 
 template<typename T>
 void Buffer<T>::CreateBuffer(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const T& data)
 {
     CreateBuffer(data, sizeof(T), usage, memoryUsage);
+}
+
+template<typename T>
+void Buffer<T>::UploadData(const std::vector<T>& data, VkDeviceSize offset)
+{
+    UploadDataGeneric(data.data(), sizeof(T) * data.size(), offset);
+}
+
+template<typename T>
+void Buffer<T>::UploadData(const T* data, VkDeviceSize offset)
+{
+    UploadDataGeneric(data, sizeof(T), offset);
+}
+
+template<typename T>
+void Buffer<T>::UploadDataGeneric(const T* data, const VkDeviceSize& dataSize ,VkDeviceSize offset)
+{
+    VkBuffer stagingBuffer;
+    VmaAllocation stagingMemory;
+    VmaAllocationInfo stagingAllocInfo{};
+
+    VkBufferCreateInfo stagingInfo{};
+    stagingInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    stagingInfo.size = dataSize;
+    stagingInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    stagingInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo stagingAllocCreateInfo{};
+    stagingAllocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    stagingAllocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+    _allocator->CreateBuffer(stagingInfo, stagingAllocCreateInfo, &stagingBuffer, &stagingMemory, &stagingAllocInfo);
+
+    memcpy(stagingAllocInfo.pMappedData, data, dataSize);
+
+    CopyBuffer(stagingBuffer, _buffer, dataSize, offset);
+
+    vmaDestroyBuffer(_allocator->GetAllocator(), stagingBuffer, stagingMemory);
+}
+
+template<typename T>
+void Buffer<T>::CreateBuffer(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const VkDeviceSize& size)
+{
+    CreateBuffer(nullptr, size, usage, memoryUsage, 0);
 }
 
 template<typename T>
@@ -96,6 +150,12 @@ template<typename T>
 void Buffer<T>::CreateBufferMapped(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, const T& data)
 {
     CreateBuffer(&data, sizeof(T), usage, memoryUsage, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+}
+
+template<typename T>
+void Buffer<T>::CreateBufferMapped(const VkBufferUsageFlags& usage, const VmaMemoryUsage& memoryUsage, VkDeviceSize size)
+{
+    CreateBuffer(nullptr, size, usage, memoryUsage, VMA_ALLOCATION_CREATE_MAPPED_BIT);
 }
 
 template<typename T>
@@ -140,6 +200,12 @@ void Buffer<T>::CreateBufferWithStaging(const VkBufferUsageFlags& usage, const V
 template<typename T>
 void Buffer<T>::CopyBuffer(const VkBuffer src, const VkBuffer dst, VkDeviceSize size) const
 {
+    CopyBuffer(src, dst, size, 0);
+}
+
+template<typename T>
+void Buffer<T>::CopyBuffer(const VkBuffer src, const VkBuffer dst, VkDeviceSize size, VkDeviceSize offset) const
+{
     VkCommandBufferAllocateInfo allocateInfo {};
     allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -157,7 +223,7 @@ void Buffer<T>::CopyBuffer(const VkBuffer src, const VkBuffer dst, VkDeviceSize 
 
     VkBufferCopy copyRegion {};
     copyRegion.srcOffset = 0;
-    copyRegion.dstOffset = 0;
+    copyRegion.dstOffset = offset;
     copyRegion.size = size;
     vkCmdCopyBuffer(commandBuffer, src, dst, 1, &copyRegion);
 
