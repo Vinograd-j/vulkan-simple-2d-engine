@@ -4,12 +4,13 @@
 #include <imgui_impl_vulkan.h>
 #include <iostream>
 #include <random>
+#include <glm/ext/matrix_transform.hpp>
 
 #include "../../../backend/vulkan/buffers/include/storage-buffer.h"
-#include "../../../backend/vulkan/buffers/include/uniform-buffer.h"
+#include "../../../backend/vulkan/buffers/include/view-projection-buffer.h"
 #include "../../../backend/vulkan/include/allocator.h"
 #include "../../struct/storage-buffer.h"
-#include "../objects/shapes/include/triangle.h"
+#include "../objects/shapes/include/circle.h"
 
 SceneDrawer::SceneDrawer(const Allocator* allocator, const CommandPool* pool, const CommandBuffers& buffers, const GraphicsPipeline* pipeline, PresentSwapchain* swapchain, const LogicalDevice* device, const VkDescriptorSetLayout& layout, Gui* gui) :
                                                                                                                             Renderer(pipeline, swapchain, device),
@@ -113,7 +114,7 @@ void SceneDrawer::DrawFrame()
 void SceneDrawer::CreateScene()
 {
     _scene = std::make_unique<Scene>(_commandPool, _allocator, _device);
-    _scene->AddObject(std::make_shared<Triangle>());
+    _scene->AddObject(std::make_shared<Circle>(0.3, 128));
 }
 
 void SceneDrawer::CreateDescriptorSets()
@@ -157,15 +158,44 @@ void SceneDrawer::UpdateDescriptorSets(uint32_t frameIndex) const
     descriptorWrite.pImageInfo = nullptr;
     descriptorWrite.pTexelBufferView = nullptr;
 
-    vkUpdateDescriptorSets(_device->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+    VkDescriptorBufferInfo vpbInfo {};
+    vpbInfo.buffer = _scene->GetViewProjectionBuffers()[frameIndex]->GetBuffer();
+    vpbInfo.offset = 0;
+    vpbInfo.range = sizeof(ViewProjectionBuffer);
+    VkWriteDescriptorSet descriptorWriteVPB {};
+    descriptorWriteVPB.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWriteVPB.dstSet = _descriptorSets[frameIndex];
+    descriptorWriteVPB.dstBinding = 0;
+    descriptorWriteVPB.dstArrayElement = 0;
+    descriptorWriteVPB.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWriteVPB.descriptorCount = 1;
+    descriptorWriteVPB.pBufferInfo = &vpbInfo;
+    descriptorWriteVPB.pImageInfo = nullptr;
+    descriptorWriteVPB.pTexelBufferView = nullptr;
+
+    std::array writes { descriptorWrite, descriptorWriteVPB };
+
+    vkUpdateDescriptorSets(_device->GetDevice(), writes.size(), writes.data(), 0, nullptr);
 }
 
 void SceneDrawer::Update(uint32_t currentFrame)
 {
-    UpdateDescriptorSets(currentFrame);
     _recorder.reset();
     CreateBufferRecorder();
+
+    auto& viewProj = _scene->GetViewProjectionBuffers();
+
+    float aspectRatio = static_cast<float>(_swapchain->GetExtent().width) / _swapchain->GetExtent().height;
+    glm::mat4 aspectFix = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / aspectRatio, 1.0f, 1.0f));
+    ViewProjectionBuffer vp{};
+    vp._view = glm::mat4(1.0f);
+    vp._proj = aspectFix;
+
+    viewProj[currentFrame]->Update(vp);
+
     _scene->GetStorageBuffers()[currentFrame]->Update(_scene->GetBufferObjects());
+
+    UpdateDescriptorSets(currentFrame);
 }
 
 void SceneDrawer::CreateBufferRecorder()

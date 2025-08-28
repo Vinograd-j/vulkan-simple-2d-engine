@@ -13,6 +13,17 @@ Scene::Scene(const std::vector<std::shared_ptr<Renderable>>& objects, const Comm
     CreateVertexBuffer();
     CreateIndexBuffer();
     CreateSSBO();
+    CreateViewProjectionBuffers();
+}
+
+Scene::Scene(const CommandPool* commandPool, const Allocator* allocator, const LogicalDevice* device)  : _commandPool(commandPool),
+                                                                                                         _allocator(allocator),
+                                                                                                         _device(device)
+{
+    CreateVertexBuffer();
+    CreateIndexBuffer();
+    CreateSSBO();
+    CreateViewProjectionBuffers();
 }
 
 void Scene::AddObject(const std::shared_ptr<Renderable>& object)
@@ -35,6 +46,7 @@ void Scene::AddObject(const std::shared_ptr<Renderable>& object)
     _currentIndexOffset += static_cast<uint32_t>(object->GetIndices().size());
 
     StorageBufferObject storageBuffer {};
+    storageBuffer._objectId = static_cast<uint32_t>(object->GetShapeType());
     storageBuffer._model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.7f));
     storageBuffer._color = glm::vec3(1, 1, 1);
     _bufferObjects.push_back(storageBuffer);
@@ -76,6 +88,14 @@ void Scene::CreateIndexBuffer()
         _indexBuffer.reset();
 
     _indexBuffer = std::make_unique<IndexBuffer>(_allocator, _commandPool, _device);
+}
+
+void Scene::CreateViewProjectionBuffers()
+{
+    _viewProjBuffers.resize(2);
+
+    for (auto& buffer : _viewProjBuffers)
+        buffer = std::make_shared<UniformBuffer>(_allocator, _commandPool, _device, ViewProjectionBuffer {});
 }
 
 Scene::~Scene()

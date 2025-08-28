@@ -8,6 +8,7 @@
 #include "../objects/shapes/include/circle.h"
 #include "../objects/shapes/include/square.h"
 #include "../objects/shapes/include/triangle.h"
+#include "magic_enum.hpp"
 
 VkCommandBuffer Gui::PrepareCommandBuffer(uint32_t imageIndex, const VkImageView& imageView) const
 {
@@ -29,7 +30,10 @@ void Gui::DrawSceneGUI(Scene& scene) const
         auto& obj = objects[i];
 
         ImGui::Separator();
-        ImGui::Text("Object %zu", i + 1);
+        std::string label = "Object " + std::to_string(i + 1) + " " +
+                            std::string(magic_enum::enum_name(static_cast<ShapeType>(obj._objectId)));
+        ImGui::Text("%s", label.c_str());
+
 
         ImGui::SameLine();
         ImGui::ColorButton(("##preview" + std::to_string(i)).c_str(),
@@ -57,7 +61,7 @@ void Gui::DrawSceneGUI(Scene& scene) const
     }
 
     if (ImGui::Button("Add New Circle##add_circle"))
-        scene.AddObject(std::make_shared<Circle>(0.3, 512));
+        scene.AddObject(std::make_shared<Circle>(0.2, 512));
     if (ImGui::Button("Add New Triangle##add_triangle"))
         scene.AddObject(std::make_shared<Triangle>());
     if (ImGui::Button("Add New Square##add_square"))

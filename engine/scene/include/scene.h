@@ -6,6 +6,7 @@
 #include "../../../backend/vulkan/buffers/include/index-buffer.h"
 #include "../../../backend/vulkan/buffers/include/storage-buffer.h"
 #include "../../../backend/vulkan/buffers/include/vertex-buffer.h"
+#include "../../../backend/vulkan/buffers/include/view-projection-buffer.h"
 #include "../../struct/storage-buffer.h"
 #include "../objects/object-data.h"
 #include "../objects/include/renderable.h"
@@ -27,6 +28,7 @@ private:
 
     std::vector<StorageBufferObject> _bufferObjects;
     std::vector<std::shared_ptr<StorageBuffer>> _storageBuffer;
+    std::vector<std::shared_ptr<UniformBuffer>> _viewProjBuffers;
 
 private:
 
@@ -41,14 +43,7 @@ public:
 
     explicit Scene(const std::vector<std::shared_ptr<Renderable>>& objects, const CommandPool* commandPool, const Allocator* allocator, const LogicalDevice* device);
 
-    explicit Scene(const CommandPool* commandPool, const Allocator* allocator, const LogicalDevice* device) : _commandPool(commandPool),
-                                                                                                              _allocator(allocator),
-                                                                                                              _device(device)
-    {
-        CreateVertexBuffer();
-        CreateIndexBuffer();
-        CreateSSBO();
-    }
+    explicit Scene(const CommandPool* commandPool, const Allocator* allocator, const LogicalDevice* device);
 
     void AddObject(const std::shared_ptr<Renderable>& object);
 
@@ -58,6 +53,8 @@ public:
     const IndexBuffer* GetIndexBuffer() const { return _indexBuffer.get(); }
 
     std::vector<StorageBufferObject>& GetBufferObjects() { return _bufferObjects; }
+    std::vector<std::shared_ptr<UniformBuffer>>& GetViewProjectionBuffers() {return _viewProjBuffers; }
+
     size_t GetBufferObjectsSize() const { return _bufferObjects.size(); }
     std::vector<std::shared_ptr<StorageBuffer>> GetStorageBuffers() const {return _storageBuffer; }
 
@@ -70,7 +67,7 @@ private:
     void CreateStorageBufferObjects();
 
     void CreateVertexBuffer();
-
     void CreateIndexBuffer();
+    void CreateViewProjectionBuffers();
 
 };

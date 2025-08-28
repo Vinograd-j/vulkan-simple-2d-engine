@@ -1,10 +1,7 @@
 #pragma once
 
-#include <vector>
-
 #include "scene.h"
 #include "../../gui/include/im-gui.h"
-#include "../../struct/storage-buffer.h"
 
 class Gui
 {

@@ -161,7 +161,13 @@ int main()
     uboLayoutBinding.descriptorCount = 1;
     uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-    std::vector bindings { uboLayoutBinding };
+    VkDescriptorSetLayoutBinding viewProjBufferBinding {};
+    viewProjBufferBinding.binding = 0;
+    viewProjBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    viewProjBufferBinding.descriptorCount = 1;
+    viewProjBufferBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    std::vector bindings { uboLayoutBinding, viewProjBufferBinding };
     std::unique_ptr<DescriptorSetLayout> descriptorSetLayout = std::make_unique<DescriptorSetLayout>(bindings, logicalDevice.get());
     std::vector descriptorSetLayouts { descriptorSetLayout->GetDescriptorLayout() };
 

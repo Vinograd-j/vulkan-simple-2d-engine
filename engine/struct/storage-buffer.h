@@ -2,8 +2,9 @@
 
 #include "glm/glm.hpp"
 
-struct alignas(16) StorageBufferObject
+struct StorageBufferObject
 {
-    glm::mat4 _model;
-    glm::vec3 _color;
+     alignas(16) uint32_t _objectId;
+     alignas(16) glm::mat4 _model;
+     alignas(16) glm::vec3 _color;
 };

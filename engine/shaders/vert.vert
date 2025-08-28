@@ -5,6 +5,7 @@ layout(location = 0) in vec2 inPosition;
 layout(location = 0) out vec3 fragColor;
 
 struct StorageBufferObject {
+    uint _type;
     mat4 _model;
     vec3 _color;
 };

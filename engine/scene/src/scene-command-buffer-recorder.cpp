@@ -119,7 +119,7 @@ void SceneCommandBufferRecorder::RecordCommandBuffer(uint32_t bufferIndex, VkIma
     (
         _renderingObjects._swapchain->GetSwapchainImages()[imageIndex],
         layouts[imageIndex],
-       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
     );
 
     barrierToPresent.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;

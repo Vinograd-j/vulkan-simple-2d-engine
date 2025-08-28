@@ -32,8 +32,8 @@ add_library(engine
         scene/src/scene-drawer.cpp
         scene/src/synchronization.cpp
         struct/storage-buffer.h
-        ../backend/vulkan/buffers/src/uniform-buffer.cpp
-        ../backend/vulkan/buffers/include/uniform-buffer.h
+        ../backend/vulkan/buffers/src/view-projection-buffer.cpp
+        ../backend/vulkan/buffers/include/view-projection-buffer.h
         gui/src/im-gui.cpp
         gui/include/im-gui.h
         scene/src/gui.cpp
@@ -44,7 +44,7 @@ add_library(engine
         scene/objects/shapes/include/circle.h
         scene/src/scene.cpp
         scene/include/scene.h
-        struct/uniform-buffer.h
+        struct/view-projection-buffer.h
         scene/objects/object-data.h
         scene/objects/shapes/src/triangle.cpp
         scene/objects/shapes/include/triangle.h
@@ -54,3 +54,4 @@ add_library(engine
 
 target_include_directories(engine PUBLIC include)
 target_link_libraries(engine backend Vulkan::Vulkan file-manager glm::glm)
+target_include_directories(engine PRIVATE ../3rd-party)

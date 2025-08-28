@@ -1,6 +1,6 @@
 #pragma once
 
-enum class ShapeType : int
+enum class ShapeType : uint32_t
 {
     CIRCLE = 0,
     TRIANGLE = 1,
