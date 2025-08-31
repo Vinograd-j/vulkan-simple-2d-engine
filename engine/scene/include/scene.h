@@ -9,6 +9,7 @@
 #include "../../../backend/vulkan/buffers/include/view-projection-buffer.h"
 #include "../../struct/storage-buffer.h"
 #include "../objects/object-data.h"
+#include "../objects/include/camera.h"
 #include "../objects/include/renderable.h"
 
 class Scene
@@ -29,6 +30,8 @@ private:
     std::vector<StorageBufferObject> _bufferObjects;
     std::vector<std::shared_ptr<StorageBuffer>> _storageBuffer;
     std::vector<std::shared_ptr<UniformBuffer>> _viewProjBuffers;
+
+    Camera _camera;
 
 private:
 
@@ -57,6 +60,8 @@ public:
 
     size_t GetBufferObjectsSize() const { return _bufferObjects.size(); }
     std::vector<std::shared_ptr<StorageBuffer>> GetStorageBuffers() const {return _storageBuffer; }
+
+    Camera& GetCamera() { return _camera; }
 
     ~Scene();
 

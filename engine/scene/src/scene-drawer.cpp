@@ -180,6 +180,13 @@ void SceneDrawer::UpdateDescriptorSets(uint32_t frameIndex) const
 
 void SceneDrawer::Update(uint32_t currentFrame)
 {
+    using clock = std::chrono::high_resolution_clock;
+    static auto lastTime = clock::now();
+
+    auto currentTime = clock::now();
+    float deltaTime = std::chrono::duration<float>(currentTime - lastTime).count();
+    lastTime = currentTime;
+
     _recorder.reset();
     CreateBufferRecorder();
 
@@ -187,13 +194,16 @@ void SceneDrawer::Update(uint32_t currentFrame)
 
     float aspectRatio = static_cast<float>(_swapchain->GetExtent().width) / _swapchain->GetExtent().height;
     glm::mat4 aspectFix = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / aspectRatio, 1.0f, 1.0f));
+
+    _scene->GetStorageBuffers()[currentFrame]->Update(_scene->GetBufferObjects());
+    _scene->GetCamera().Update(deltaTime);
+    auto view = _scene->GetCamera().GetViewMatrix();
+
     ViewProjectionBuffer vp{};
-    vp._view = glm::mat4(1.0f);
+    vp._view = view;
     vp._proj = aspectFix;
 
     viewProj[currentFrame]->Update(vp);
-
-    _scene->GetStorageBuffers()[currentFrame]->Update(_scene->GetBufferObjects());
 
     UpdateDescriptorSets(currentFrame);
 }

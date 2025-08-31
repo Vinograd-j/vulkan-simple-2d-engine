@@ -2,7 +2,6 @@
 
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
-#include <iostream>
 
 #include "../include/scene.h"
 #include "../objects/shapes/include/circle.h"
@@ -61,11 +60,25 @@ void Gui::DrawSceneGUI(Scene& scene) const
     }
 
     if (ImGui::Button("Add New Circle##add_circle"))
-        scene.AddObject(std::make_shared<Circle>(0.2, 512));
+        scene.AddObject(std::make_shared<Circle>(0.2, 1024));
     if (ImGui::Button("Add New Triangle##add_triangle"))
         scene.AddObject(std::make_shared<Triangle>());
     if (ImGui::Button("Add New Square##add_square"))
         scene.AddObject(std::make_shared<Square>());
+
+    static constexpr KeyMapping keyMappings[] = {
+        { ImGuiKey_W, CameraKey::W },
+        { ImGuiKey_S, CameraKey::S },
+        { ImGuiKey_A, CameraKey::A },
+        { ImGuiKey_D, CameraKey::D }
+    };
+
+    for (auto& m : keyMappings) {
+        if (ImGui::IsKeyPressed(m._imguiKey))
+            scene.GetCamera().Process(m._key, true);
+        if (ImGui::IsKeyReleased(m._imguiKey))
+            scene.GetCamera().Process(m._key, false);
+    }
 
     ImGui::End();
     ImGui::Render();

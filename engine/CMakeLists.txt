@@ -50,6 +50,8 @@ add_library(engine
         scene/objects/shapes/include/triangle.h
         scene/objects/shapes/src/square.cpp
         scene/objects/shapes/include/square.h
+        scene/objects/src/camera.cpp
+        scene/objects/include/camera.h
 )
 
 target_include_directories(engine PUBLIC include)

@@ -1,7 +1,14 @@
 #pragma once
 
+#include <imgui.h>
+
 #include "scene.h"
 #include "../../gui/include/im-gui.h"
+
+struct KeyMapping {
+    ImGuiKey _imguiKey;
+    CameraKey _key;
+};
 
 class Gui
 {

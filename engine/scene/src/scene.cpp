@@ -105,6 +105,8 @@ Scene::~Scene()
 
     for (auto& buffer : _storageBuffer)
         buffer.reset();
+    for (auto& buffer : _viewProjBuffers)
+        buffer.reset();
 
     for (auto& object : _objects)
         object.reset();
