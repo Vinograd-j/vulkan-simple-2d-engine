@@ -1,5 +1,6 @@
 #include "../include/scene.h"
 
+#include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
 #include "../objects/object-data.h"

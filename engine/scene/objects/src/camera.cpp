@@ -1,5 +1,6 @@
 #include "../include/camera.h"
 
+#include <iostream>
 #include <glm/ext/matrix_transform.hpp>
 
 glm::mat4 Camera::GetViewMatrix() const
